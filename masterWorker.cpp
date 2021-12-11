@@ -12,7 +12,7 @@
 //         siendo WWWWWWWWW la ip a emplear para comunicarse con gestor de colas
 //------------------------------------------------------------------------------
 #include <iostream>
-#include "Socket.hpp"
+#include "Socket/Socket.hpp"
 using namespace std;
 
 int main(int argc, char* argv[]) {

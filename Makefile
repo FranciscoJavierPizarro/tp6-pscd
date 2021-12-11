@@ -19,9 +19,12 @@ FILTRO=filtro
 MASTERWORKER=masterWorker
 GESTOR=gestorDeColas
 
-SOCKET=Socket
-MONITOR =monitor
-COLA=BoundedQueue
+SOCKET_DIR=Socket
+SOCKET=${SOCKET_DIR}/Socket
+MONITOR_DIR=Monitor
+MONITOR =${MONITOR_DIR}/monitor
+COLA_DIR=BoundedQueue
+COLA=${COLA_DIR}/BoundedQueue
 
 CPPFLAGS=-I. -I${SOCKET_DIR} -O2 -std=c++11 -lsockets # Flags compilacion
 LDFLAGS=-pthread # Flags linkado threads

@@ -13,9 +13,9 @@
 //         siendo ZZZZ el número del puerto a emplear para comunicarse con los analizadores
 //------------------------------------------------------------------------------
 #include <iostream>
-#include "Socket.hpp"
-#include "monitor.hpp"
-#include "BoundedQueue.hpp"
+#include "Socket/Socket.hpp"
+#include "Monitor/monitor.hpp"
+#include "BoundedQueue/BoundedQueue.hpp"
 using namespace std;
 
 int main(int argc, char* argv[]) {

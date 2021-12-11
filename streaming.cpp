@@ -11,7 +11,7 @@
 //------------------------------------------------------------------------------
 #include <iostream>
 #include <fstream>
-#include "Socket.hpp"
+#include "Socket/Socket.hpp"
 using namespace std;
 const string F_INPUT = "tweets-procesados.csv";
 
