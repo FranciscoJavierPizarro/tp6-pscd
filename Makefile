@@ -13,11 +13,10 @@
 
 #---------------------------------------------------------
 CC=g++
-
 STREAMING=streaming
-FILTRO=filtro
 MASTERWORKER=masterWorker
 GESTOR=gestorDeColas
+FILTRO=filtro/
 
 SOCKET_DIR=Socket
 SOCKET=${SOCKET_DIR}/Socket
@@ -29,11 +28,7 @@ COLA=${COLA_DIR}/BoundedQueue
 CPPFLAGS=-I. -I${SOCKET_DIR} -O2 -std=c++11 -lsockets # Flags compilacion
 LDFLAGS=-pthread # Flags linkado threads
 
-all: ${STREAMING} ${FILTRO} ${MASTERWORKER} ${GESTOR}
-streaming: ${STREAMING}
-filtro: ${FILTRO}
-masterWorker: ${MASTERWORKER}
-gestor: ${GESTOR}
+all: streaming masterWorker gestor
 #----------------------------------------------------------------------------
 #Para gestionar opciones de compilación según la máquina: hendrix tiene sus manías
 #Descomentar la siguiente línea para compilar en hendrix
@@ -45,17 +40,8 @@ ${STREAMING}.o: ${STREAMING}.cpp
 	${CC} -c ${CPPFLAGS} ${STREAMING}.cpp
 
 # Linkado
-${STREAMING}: ${SOCKET}.o ${STREAMING}.o
+streaming: ${SOCKET}.o ${STREAMING}.o
 	${CC} ${LDFLAGS} ${SOCKET}.o ${STREAMING}.o -o ${STREAMING} ${SOCKETSFLAGS}
-#-----------------------------------------------------------
-# Filtro
-# Compilacion
-${FILTRO}.o: ${FILTRO}.cpp 
-	${CC} -c ${CPPFLAGS} ${FILTRO}.cpp
-
-# Linkado
-${FILTRO}: ${FILTRO}.o
-	${CC} ${FILTRO}.o -o ${FILTRO}
 #-----------------------------------------------------------
 # masterWorker
 # Compilacion
@@ -63,7 +49,7 @@ ${MASTERWORKER}.o: ${MASTERWORKER}.cpp
 	${CC} -c ${CPPFLAGS} ${MASTERWORKER}.cpp
 
 # Linkado
-${MASTERWORKER}: ${SOCKET}.o ${MASTERWORKER}.o
+masterWorker: ${SOCKET}.o ${MASTERWORKER}.o
 	${CC} ${LDFLAGS} ${SOCKET}.o ${MASTERWORKER}.o -o ${MASTERWORKER} ${SOCKETSFLAGS}
 #-----------------------------------------------------------
 # gestorDeColas
@@ -72,7 +58,7 @@ ${GESTOR}.o: ${GESTOR}.cpp ${COLA}.hpp ${COLA}.cpp
 	${CC} -c ${CPPFLAGS} ${GESTOR}.cpp
 
 # Linkado
-${GESTOR}: ${SOCKET}.o ${MONITOR}.o ${GESTOR}.o
+gestor: ${SOCKET}.o ${MONITOR}.o ${GESTOR}.o
 	${CC} ${LDFLAGS} ${SOCKET}.o ${MONITOR}.o ${GESTOR}.o -o ${GESTOR} ${SOCKETSFLAGS}
 #-----------------------------------------------------------
 # SOCKETS
@@ -90,6 +76,6 @@ clean:
 	$(RM) ${SOCKET}.o
 	$(RM) ${MONITOR}.o
 	$(RM) ${STREAMING} ${STREAMING}.o
-	$(RM) ${FILTRO} ${FILTRO}.o
 	$(RM) ${MASTERWORKER} ${MASTERWORKER}.o
 	$(RM) ${GESTOR} ${GESTOR}.o
+	$(RM) ${FILTRO} -r

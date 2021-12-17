@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 // File:   masterWorker.cpp
-// Author: Inés Román Gracia
+// Authors:Inés Román Gracia
 //         Francisco Javier Pizarro Martínez
 // Date:   11/12/2021
 // Coms:   Código principal del programa masterWorker
@@ -148,7 +148,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
     }
 
     // Cerramos el socket
-    int error_code = chanGestor.Close(socket_fd_gestor);
+    error_code = chanGestor.Close(socket_fd_gestor);
     if(error_code == -1) {
         cerr << "Error cerrando el socket: " << strerror(errno) << endl;
     }
