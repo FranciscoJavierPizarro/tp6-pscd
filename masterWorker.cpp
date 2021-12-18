@@ -38,7 +38,7 @@ const int TWEETS_TO_TASK = 5;
 //Post: para cada i € [0, TWEETS_FROM_STREAM/TWEETS_TO_TASK), outTasks[i] contiene:
 //      un string formado por tantos tweets como TWEETS_TO_TASK
 //      cada tweet tiene a su izquierda "$i" i € [0,TWEETS_TO_TASK) y a su derecha
-//      "$j" j € (0,TWEETS_TO_TASK]
+//      "$j" j € (0,TWEETS_TO_TASK], esto esta precedido por "PUBLISH_TAREAS,"
 void createTasksBlock(string inTweets, string outTasks[TWEETS_FROM_STREAM/TWEETS_TO_TASK]) {
     for(int i = 0; i < TWEETS_FROM_STREAM/TWEETS_TO_TASK; i++) {
         outTasks[i] = "PUBLISH_TAREAS,";
