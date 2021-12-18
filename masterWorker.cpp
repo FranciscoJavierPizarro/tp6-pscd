@@ -20,12 +20,37 @@ using namespace std;
 /*
 Current state:
 Protocolo de comunicaciones hecho
-Falta de implementar el procesamiento de las respuestas y 
-concretar/implementar que deben enviar los workers
+Procesamiento de las respuestas master hecho
+Falta concretar/implementar que deben enviar los workers
+y comentar el código
 
 
 */
+//CONSTANTES
 const int N_WORKERS = 5;
+const int TWEETS_FROM_STREAM = 25;
+const int TWEETS_TO_TASK = 5;
+
+//Comm: Procesa el bloque de entrada y genera los bloques de tareas
+//Pre:  inTweets contiene un string formado por tantos tweets como TWEETS_FROM_STREAM
+//      cada tweet tiene a su izquierda "$i" i € [0,TWEETS_FROM_STREAM) y a su derecha
+//      "$j" j € (0,TWEETS_FROM_STREAM]
+//Post: para cada i € [0, TWEETS_FROM_STREAM/TWEETS_TO_TASK), outTasks[i] contiene:
+//      un string formado por tantos tweets como TWEETS_TO_TASK
+//      cada tweet tiene a su izquierda "$i" i € [0,TWEETS_TO_TASK) y a su derecha
+//      "$j" j € (0,TWEETS_TO_TASK]
+void createTasksBlock(string inTweets, string outTasks[TWEETS_FROM_STREAM/TWEETS_TO_TASK]) {
+    for(int i = 0; i < TWEETS_FROM_STREAM/TWEETS_TO_TASK; i++) {
+        outTasks[i] = "PUBLISH_TAREAS,";
+    }
+    int a, b;
+    for(int i = 0; i < TWEETS_FROM_STREAM; i++) {
+        a = (inTweets.find("$" + to_string(i)))+("$" + to_string(i)).length();
+        b = (inTweets.find_first_of("$",a)); 
+        outTasks[i/TWEETS_TO_TASK].append("$" + to_string((i) % TWEETS_TO_TASK) + inTweets.substr(a,b - a));
+        if ((i + 1) % TWEETS_TO_TASK == 0) outTasks[i/TWEETS_TO_TASK].append("$" + to_string(TWEETS_TO_TASK));
+    }
+}
 
 void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_GESTOR) {
     string MENS_FIN = "FIN";
@@ -78,9 +103,8 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
     int read_bytes;   //num de bytes recibidos en un mensaje
     int send_bytes;  //num de bytes enviados en un mensaje
 
-    mensaje = "GET_TWEETS";
-    
     for(int j = 0; j < 1; j++) {
+        mensaje = "GET_TWEETS";
         // Enviamos el mensaje de petición al servicio de streaming
         send_bytes = chanStream.Send(socket_fd_streaming, mensaje);
             
@@ -102,10 +126,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
         }    
 
         //PROCESAR RESPUESTA
-
-
-
-    //¿????¿
+        createTasksBlock(mensaje,tareas);
 
         for(int i = 0; i < 5; i++) {
             // Enviamos el bloque de tareas al gestor de colas
@@ -251,14 +272,26 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id) {
 
 int main(int argc, char* argv[]) {
     if(argc == 5) {
+        //VARIABLES DE INVOCACIÓN
         int PORT_STREAMING = stoi(argv[1]);
-        cout << PORT_STREAMING << endl;
         string IP_STREAMING = string(argv[2]);
-        cout << IP_STREAMING << endl;
         int PORT_GESTOR = stoi(argv[3]);
-        cout << PORT_GESTOR << endl;
         string IP_GESTOR = string(argv[4]);
-        cout << IP_GESTOR << endl;
+        //string prueba = "$0a$1aa$2aaa$3aaaa$4aaaaa$5b$6bb$7bbb$8bbbb$9bbbbb$10c$11cc$12ccc$13cccc$14ccccc$15d$16dd$17ddd$18dddd$19ddddd$20e$21ee$22eee$23eeee$24eeeee$25";
+        //string prueba2[5];
+        //createTasksBlock(prueba,prueba2);
+        //CREACION DE THREADS
+        thread mast;
+        thread workers[N_WORKERS];
+        mast = thread(&master, PORT_STREAMING, IP_STREAMING, PORT_GESTOR, IP_GESTOR);
+        for(int i = 0; i < N_WORKERS; i++) {
+            workers[i] = thread(&worker,PORT_GESTOR, IP_GESTOR, i);
+        }
+        //ESPERA FINALIZACIÓN
+        mast.join();
+        for(int i = 0; i < N_WORKERS; i++) {
+            workers[i].join();
+        }
     }
     else {
         cout << "Ejecutar de la siguiente forma:" << endl;
