@@ -44,9 +44,11 @@ void createTasksBlock(string inTweets, string outTasks[TWEETS_FROM_STREAM/TWEETS
         outTasks[i] = "PUBLISH_TAREAS,";
     }
     int a, b;
+    //cout << inTweets << endl;
     for(int i = 0; i < TWEETS_FROM_STREAM; i++) {
-        a = (inTweets.find("$" + to_string(i) + " "))+("$" + to_string(i) + " ").length();
-        b = (inTweets.find_first_of("$",a)); 
+        a = (inTweets.find("$" + to_string(i) + " "))+("$" + to_string(i)+" ").length();
+        b = (inTweets.find_first_of("$",a));
+        cout << inTweets.substr(a,b - a) << endl; 
         outTasks[i/TWEETS_TO_TASK].append("$" + to_string((i) % TWEETS_TO_TASK) + inTweets.substr(a,b - a));
         if ((i + 1) % TWEETS_TO_TASK == 0) outTasks[i/TWEETS_TO_TASK].append("$" + to_string(TWEETS_TO_TASK));
     }
@@ -55,32 +57,12 @@ void createTasksBlock(string inTweets, string outTasks[TWEETS_FROM_STREAM/TWEETS
 void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_GESTOR) {
     string MENS_FIN = "FIN";
     // Creación del socket con el que se llevará a cabo
-    // la comunicación con el servidor.
-    Socket chanGestor(IP_GESTOR, PORT_GESTOR);
+    
+    Socket chanStream(IP_STREAMING, PORT_STREAMING);
 
     // Conectamos con el servidor. Probamos varias conexiones
-    const int MAX_ATTEMPS = 10;
     int count = 0;
-    int socket_fd_gestor;
-    do {
-        // Conexión con el servidor
-        socket_fd_gestor = chanGestor.Connect();
-        count++;
-
-        // Si error --> esperamos 1 segundo para reconectar
-        if(socket_fd_gestor == -1) {
-            this_thread::sleep_for(chrono::seconds(1));
-        }
-    } while(socket_fd_gestor == -1 && count < MAX_ATTEMPS);
-
-    // Chequeamos si se ha realizado la conexión
-    if(socket_fd_gestor == -1) {
-        
-    }
-    Socket chanStream(IP_GESTOR, PORT_GESTOR);
-
-    // Conectamos con el servidor. Probamos varias conexiones
-    count = 0;
+    const int MAX_ATTEMPS = 10;
     int socket_fd_streaming;
     do {
         // Conexión con el servidor
@@ -103,7 +85,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
     int read_bytes;   //num de bytes recibidos en un mensaje
     int send_bytes;  //num de bytes enviados en un mensaje
 
-    for(int j = 0; j < 1; j++) {
+    for(int j = 0; j < 2; j++) {
         mensaje = "GET_TWEETS";
         // Enviamos el mensaje de petición al servicio de streaming
         send_bytes = chanStream.Send(socket_fd_streaming, mensaje);
@@ -129,15 +111,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
         createTasksBlock(mensaje,tareas);
 
         for(int i = 0; i < 5; i++) {
-            // Enviamos el bloque de tareas al gestor de colas
-            send_bytes = chanGestor.Send(socket_fd_gestor, tareas[i]);
-                
-            if(send_bytes == -1) {
-                cerr << "Error al enviar datos: " << strerror(errno) << endl;
-                // Cerramos el socket
-                chanGestor.Close(socket_fd_gestor);
-                exit(1);
-            }
+            //cout << tareas[i] << endl;
         }
     }
     mensaje = MENS_FIN;
@@ -150,15 +124,8 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
         chanStream.Close(socket_fd_streaming);
         exit(1);
     }
-    // Enviamos el mensaje de fin al servicio gestor de colas
-    send_bytes = chanGestor.Send(socket_fd_gestor, mensaje);
-            
-    if(send_bytes == -1) {
-        cerr << "Error al enviar datos: " << strerror(errno) << endl;
-        // Cerramos el socket
-        chanGestor.Close(socket_fd_gestor);
-        exit(1);
-    }
+
+    
 
 
 
@@ -168,11 +135,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
         cerr << "Error cerrando el socket: " << strerror(errno) << endl;
     }
 
-    // Cerramos el socket
-    error_code = chanGestor.Close(socket_fd_gestor);
-    if(error_code == -1) {
-        cerr << "Error cerrando el socket: " << strerror(errno) << endl;
-    }
+    
 }
 
 void worker(int PORT_GESTOR, string IP_GESTOR, int id) {
@@ -282,16 +245,16 @@ int main(int argc, char* argv[]) {
         //createTasksBlock(prueba,prueba2);
         //CREACION DE THREADS
         thread mast;
-        thread workers[N_WORKERS];
+        //thread workers[N_WORKERS];
         mast = thread(&master, PORT_STREAMING, IP_STREAMING, PORT_GESTOR, IP_GESTOR);
-        for(int i = 0; i < N_WORKERS; i++) {
-            workers[i] = thread(&worker,PORT_GESTOR, IP_GESTOR, i);
-        }
+        //for(int i = 0; i < N_WORKERS; i++) {
+        //    workers[i] = thread(&worker,PORT_GESTOR, IP_GESTOR, i);
+        //}
         //ESPERA FINALIZACIÓN
         mast.join();
-        for(int i = 0; i < N_WORKERS; i++) {
-            workers[i].join();
-        }
+        //for(int i = 0; i < N_WORKERS; i++) {
+          //  workers[i].join();
+        //}
     }
     else {
         cout << "Ejecutar de la siguiente forma:" << endl;

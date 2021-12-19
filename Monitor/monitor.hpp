@@ -29,5 +29,5 @@ class ControldeCola {
         condition_variable estaEscribiendo;
         condition_variable estaBorrando;
 };
-
+#include "monitor.cpp"
 #endif

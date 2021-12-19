@@ -20,8 +20,13 @@
 #include "BoundedQueue/BoundedQueue.hpp"
 using namespace std;
 
-void tareas(Socket socTareas, int fd, controlDeCola controlTareas){
-    BoundedQueue<string> colaTareas;
+const int N = 50;
+
+void tareas(Socket socTareas, int fd){
+    ControldeCola controlTareas;
+    BoundedQueue<string> colaTareas(N);
+    int a = 0;
+
     string elemento;
     int length = 10000;
     char buffer[length];
@@ -38,12 +43,13 @@ void tareas(Socket socTareas, int fd, controlDeCola controlTareas){
         }
         mensaje = strtok (buffer," ,");
         datos = strtok (NULL, " ,");
-        
+        std::string str(datos);
         if(mensaje == "FIN"){
             out = true;
         }
         else if(mensaje == "READ_TAREAS"){
-            controlTareas.leerCola(colaTareas,elemento);
+            controlTareas.leerCola(colaTareas, elemento);
+
             int send_bytes = socTareas.Send(fd, elemento); //enviar el elemento leído
             if(send_bytes == -1) {
                 string mensError(strerror(errno));
@@ -54,7 +60,8 @@ void tareas(Socket socTareas, int fd, controlDeCola controlTareas){
             }
         }
         else if(mensaje == "PUBLISH_TAREAS"){
-            controlTareas.escribirCola(colaTareas, datos);
+            controlTareas.escribirCola(colaTareas, elemento);
+
         }
     }
     socTareas.Close(fd); //cerrar el socket
@@ -78,7 +85,7 @@ int main(int argc, char* argv[]) {
         const int N_COLAS = 3;
         
         //3 monitores, uno para cada cola
-        ControldeCola monitores[N_COLAS]; 
+        ControldeCola monitorTareas; 
          
         thread cliente[N_COLAS];
         int client_fd[N_COLAS];
@@ -113,17 +120,17 @@ int main(int argc, char* argv[]) {
             }
         //faltan las otras dos colas
 
-        cliente[0] = thread(&tareas, ref(socTareas), client_fd[0], monitores[0]);
+        cliente[0] = thread(&tareas, socTareas, 3);
         cout << "Nuevo cliente " + to_string(0) + " aceptado" + "\n";
+        /*
         cliente[1] = thread(&tags, monitores[1]);
         cout << "Nuevo cliente " + to_string(1) + " aceptado" + "\n";
         cliente[2] = thread(&QoS, monitores[2]);
         cout << "Nuevo cliente " + to_string(2) + " aceptado" + "\n";
+        */
 
 
-        for (int i = 0; i < N_COLAS; i++) {
-            cliente[i].join();
-        }
+        cliente[0].join();
 
         // Cerramos el socket de tareas
         error_code = socTareas.Close(socket_fd);

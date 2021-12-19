@@ -20,7 +20,7 @@ using namespace std;
 // Pre:---
 // Post: Devuelve 25 tweets de tweets-filtrados.csv en buffer
 void getTweets(string& buffer,ifstream& f) {
-    int maxTweets = 24;
+    int maxTweets = 25;
     for (int i = 0; i < maxTweets; i++) {
         string aux;
         getline(f,aux);
@@ -28,9 +28,11 @@ void getTweets(string& buffer,ifstream& f) {
         if (f.eof()) {
             f.clear();
             f.seekg (0, ios::beg);
+            string cabecera;
+            getline(f,cabecera); // ignoramos la cabecera
         }
         else {
-            buffer = buffer + "$" + to_string(i) + aux;
+            buffer = buffer + "$" + to_string(i) + " " + aux;
         }
     }
 }
@@ -47,6 +49,8 @@ int main(int argc, char* argv[]) {
         //abrimos el fichero del cual vamos a extaer los tweets:
         ifstream f;
         f.open(TWEETS);
+        string cabecera;
+        getline(f,cabecera); // ignoramos la cabecera
         // Creación del socket con el que se llevará a cabo
         // la comunicación con el servidor.
         Socket chan(PORT);
@@ -81,7 +85,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Buffer para recibir el mensaje
-        int length = 9;
+        int length = 12;
         string buffer;
         int rcv_bytes;   //num de bytes recibidos en un mensaje
         int send_bytes;  //num de bytes enviados en un mensaje
@@ -108,6 +112,7 @@ int main(int argc, char* argv[]) {
                 // colocamos 25 tweets en el buffer
                 getTweets(tweets,f);
                 // Enviamos la respuesta
+                cout << tweets << endl;
                 send_bytes = chan.Send(client_fd, tweets);
                 if(send_bytes == -1) {
                     string mensError(strerror(errno));
@@ -134,7 +139,7 @@ int main(int argc, char* argv[]) {
             cerr << "Error cerrando el socket del servidor: " + mensError + "\n";
         }
         // Mensaje de despedida
-        cout << "Adiós ctm" << endl;
+        cout << "Servicio finalizado" << endl;
 
         return error_code;
     }

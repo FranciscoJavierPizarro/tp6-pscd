@@ -17,4 +17,4 @@ gcc -lfl lex.yy.c -o filtro
 ./filtro <../${F_INPUT} >../${F_OUTPUT}
 cd ..
 make streaming
-./streaming ${STREAM_PORT}
+./streaming ${STREAM_PORT} >salidaServidor.txt

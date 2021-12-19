@@ -55,12 +55,12 @@ masterWorker: ${SOCKET}.o ${MASTERWORKER}.o
 #-----------------------------------------------------------
 # gestorDeColas
 # Compilacion
-${GESTOR}.o: ${GESTOR}.cpp ${COLA}.hpp ${COLA}.cpp
+${GESTOR}.o: ${GESTOR}.cpp ${COLA}.hpp ${COLA}.cpp ${MONITOR}.hpp ${MONITOR}.cpp
 	${CC} -c ${CPPFLAGS} ${GESTOR}.cpp
 
 # Linkado
-gestor: ${SOCKET}.o ${MONITOR}.o ${GESTOR}.o
-	${CC} ${LDFLAGS} ${SOCKET}.o ${MONITOR}.o ${GESTOR}.o -o ${GESTOR} ${SOCKETSFLAGS}
+gestor: ${SOCKET}.o ${GESTOR}.o
+	${CC} ${LDFLAGS} ${SOCKET}.o ${GESTOR}.o -o ${GESTOR} ${SOCKETSFLAGS}
 #-----------------------------------------------------------
 # SOCKETS
 # Compilacion libreria de Sockets
@@ -69,8 +69,7 @@ ${SOCKET}.o: ${SOCKET}.hpp ${SOCKET}.cpp
 #-----------------------------------------------------------
 # MONITOR
 # Compilación del monitor
-${MONITOR}.o: ${MONITOR}.hpp ${MONITOR}.cpp
-	${CC} -c ${MONITOR}.cpp -o ${MONITOR}.o ${CPPFLAGS}
+
 #-----------------------------------------------------------	
 # LIMPIEZA
 clean:

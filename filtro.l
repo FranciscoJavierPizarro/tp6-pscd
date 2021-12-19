@@ -1,7 +1,7 @@
 /* File:    filtro.l
  * Authors: Axel Isaac Pazmiño Ortega NIP: 817627 y Alicia Lázaro Huerta NIP: 820574
  * Date:    15/12/2021
- * Comms:   Compilar mediante: flex filtro.flex
+ * Comms:   Compilar mediante: flex filtro.l
  *                    gcc -lfl lex.yy.c -o filtro
  * Ejecutar con: ./filtro <tweets-sinProcesar.csv> tweets-filtrados.csv
  * Filtra los tweets con estructura fecha;cliente;autor;tweet eliminando emoticonos o carácteres no esperados 
