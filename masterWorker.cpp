@@ -61,26 +61,9 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
     // Conectamos con el servidor. Probamos varias conexiones
     const int MAX_ATTEMPS = 10;
     int count = 0;
-    int socket_fd_gestor;
-    do {
-        // Conexión con el servidor
-        socket_fd_gestor = chanGestor.Connect();
-        count++;
+    
+    Socket chanStream(IP_STREAMING, PORT_STREAMING);
 
-        // Si error --> esperamos 1 segundo para reconectar
-        if(socket_fd_gestor == -1) {
-            this_thread::sleep_for(chrono::seconds(1));
-        }
-    } while(socket_fd_gestor == -1 && count < MAX_ATTEMPS);
-
-    // Chequeamos si se ha realizado la conexión
-    if(socket_fd_gestor == -1) {
-        
-    }
-    Socket chanStream(IP_GESTOR, PORT_GESTOR);
-
-    // Conectamos con el servidor. Probamos varias conexiones
-    count = 0;
     int socket_fd_streaming;
     do {
         // Conexión con el servidor
@@ -95,6 +78,25 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
 
     // Chequeamos si se ha realizado la conexión
     if(socket_fd_streaming == -1) {
+        
+    }
+    // Conectamos con el servidor. Probamos varias conexiones
+    count = 0;
+
+    int socket_fd_gestor;
+    do {
+        // Conexión con el servidor
+        socket_fd_gestor = chanGestor.Connect();
+        count++;
+
+        // Si error --> esperamos 1 segundo para reconectar
+        if(socket_fd_gestor == -1) {
+            this_thread::sleep_for(chrono::seconds(1));
+        }
+    } while(socket_fd_gestor == -1 && count < MAX_ATTEMPS);
+
+    // Chequeamos si se ha realizado la conexión
+    if(socket_fd_gestor == -1) {
         
     }
     int LENGTH = 10000;
@@ -124,7 +126,6 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
             chanStream.Close(socket_fd_streaming);
             exit(1);
         }    
-
         //PROCESAR RESPUESTA
         createTasksBlock(mensaje,tareas);
 
@@ -140,9 +141,8 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
             }
         }
     }
-    mensaje = MENS_FIN;
     // Enviamos el mensaje de fin al servicio de streaming
-    send_bytes = chanStream.Send(socket_fd_streaming, mensaje);
+    send_bytes = chanStream.Send(socket_fd_streaming, MENS_FIN);
             
     if(send_bytes == -1) {
         cerr << "Error al enviar datos: " << strerror(errno) << endl;
@@ -151,7 +151,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
         exit(1);
     }
     // Enviamos el mensaje de fin al servicio gestor de colas
-    send_bytes = chanGestor.Send(socket_fd_gestor, mensaje);
+    send_bytes = chanGestor.Send(socket_fd_gestor, MENS_FIN);
             
     if(send_bytes == -1) {
         cerr << "Error al enviar datos: " << strerror(errno) << endl;
@@ -167,7 +167,6 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
     if(error_code == -1) {
         cerr << "Error cerrando el socket: " << strerror(errno) << endl;
     }
-
     // Cerramos el socket
     error_code = chanGestor.Close(socket_fd_gestor);
     if(error_code == -1) {
@@ -257,10 +256,6 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id) {
                 exit(1);
             }
         }
-
-
-
-
     }
 
     // Cerramos el socket
@@ -277,9 +272,6 @@ int main(int argc, char* argv[]) {
         string IP_STREAMING = string(argv[2]);
         int PORT_GESTOR = stoi(argv[3]);
         string IP_GESTOR = string(argv[4]);
-        //string prueba = "$0a$1aa$2aaa$3aaaa$4aaaaa$5b$6bb$7bbb$8bbbb$9bbbbb$10c$11cc$12ccc$13cccc$14ccccc$15d$16dd$17ddd$18dddd$19ddddd$20e$21ee$22eee$23eeee$24eeeee$25";
-        //string prueba2[5];
-        //createTasksBlock(prueba,prueba2);
         //CREACION DE THREADS
         thread mast;
         thread workers[N_WORKERS];

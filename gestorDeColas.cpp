@@ -20,124 +20,114 @@
 #include "BoundedQueue/BoundedQueue.hpp"
 using namespace std;
 
-const int N = 50;
-
-void tareas(Socket socTareas, int fd){
-    ControldeCola controlTareas;
-    BoundedQueue<string> colaTareas(N);
+const int N = 5;
+const int N_COLAS = 3;
+void masterWorker(Socket& socTareas, int fd, ControldeCola& controlTareas, BoundedQueue<string>& colaTareas, bool& fin){
     int a = 0;
-
-    string elemento;
     int length = 10000;
-    char buffer[length];
-    char * mensaje;
-    char * datos;
+    string mensaje, datos;
     bool out = false;
 
     while(!out){
-        int rcv_bytes = socTareas.Recv(fd,buffer,length);
+        int rcv_bytes = socTareas.Recv(fd,mensaje,length);
         if (rcv_bytes == -1) {
             cerr << "Error al recibir datos: " + string(strerror(errno)) + "\n";
             // Cerramos los sockets
             socTareas.Close(fd);
         }
-        mensaje = strtok (buffer," ,");
-        datos = strtok (NULL, " ,");
-        std::string str(datos);
+        
         if(mensaje == "FIN"){
             out = true;
+            fin = true;
+            cout << mensaje << endl;
         }
-        else if(mensaje == "READ_TAREAS"){
-            controlTareas.leerCola(colaTareas, elemento);
-
-            int send_bytes = socTareas.Send(fd, elemento); //enviar el elemento leído
-            if(send_bytes == -1) {
-                string mensError(strerror(errno));
-                cerr << "Error al enviar datos: " + mensError + "\n";
-                // Cerramos los sockets
-                socTareas.Close(fd);
-                exit(1);
+        else {
+            datos = mensaje.substr(mensaje.find(","),(mensaje.length() - mensaje.find(",")));
+            mensaje = mensaje.substr(0,mensaje.find(","));
+            
+            if(mensaje == "PUBLISH_TAREAS"){
+                // controlTareas.escribirCola(colaTareas, elemento);
             }
-        }
-        else if(mensaje == "PUBLISH_TAREAS"){
-            controlTareas.escribirCola(colaTareas, elemento);
-
+            else if(mensaje == "READ_TAREAS"){
+            //     controlTareas.leerCola(colaTareas, elemento);
+                if(!fin) {
+                    int send_bytes = socTareas.Send(fd, mensaje); //enviar el elemento leído
+                    if(send_bytes == -1) {
+                        string mensError(strerror(errno));
+                        cerr << "Error al enviar datos: " + mensError + "\n";
+                        // Cerramos los sockets
+                        socTareas.Close(fd);
+                        exit(1);
+                    }
+                }
+                else {
+                    mensaje = "FIN";
+                    int send_bytes = socTareas.Send(fd, mensaje); //enviar el elemento leído
+                    if(send_bytes == -1) {
+                        string mensError(strerror(errno));
+                        cerr << "Error al enviar datos: " + mensError + "\n";
+                        // Cerramos los sockets
+                        socTareas.Close(fd);
+                        exit(1);
+                    }
+                    out = true;
+                }
+            }
         }
     }
     socTareas.Close(fd); //cerrar el socket
-}
-
-void tags(){
-
-}
-
-void QoS(){
-
+    cout << "CONEXION FINALIZADA" << endl;
 }
 
 int main(int argc, char* argv[]) {
     if(argc == 3) {
         int PORT_MASTERWORKER = stoi(argv[1]);
-        cout << PORT_MASTERWORKER << endl;
         int PORT_ANALIZADORES = stoi(argv[2]);
-        cout << PORT_ANALIZADORES << endl;
-
-        const int N_COLAS = 3;
-        
-        //3 monitores, uno para cada cola
-        ControldeCola monitorTareas; 
-         
-        thread cliente[N_COLAS];
-        int client_fd[N_COLAS];
-
-        // Creación del socket con el que se llevará a cabo la comunicación con el servidor.
-        Socket socTareas(PORT_MASTERWORKER);
-        //FALTA EL SOCKET DE LAS OTRAS DOS COLAS
-
+        bool fin = false;
+        ControldeCola monitorTareas;
+        BoundedQueue<string> colaTareas(N); 
+        int MW_fd[N + 1];
+        thread MW[N + 1];
+        // Creación del canal masterWorker.
+        Socket chanMasterWorker(PORT_MASTERWORKER);
         // Bind
-        int socket_fd = socTareas.Bind();
-        if (socket_fd == -1) {
+        int socket_fd_masterWorker = chanMasterWorker.Bind();
+        if (socket_fd_masterWorker == -1) {
             cerr << "Error en el bind: " + string(strerror(errno)) + "\n";
             exit(1);
         }
-
         // Listen
-        int max_connections = 2;
-        int error_code = socTareas.Listen(max_connections);
-        if (error_code == -1) {
+        int error_code1 = chanMasterWorker.Listen(N);
+        if (error_code1 == -1) {
             cerr << "Error en el listen: " + string(strerror(errno)) + "\n";
             // Cerramos el socket
-            socTareas.Close(socket_fd);
+            chanMasterWorker.Close(socket_fd_masterWorker);
             exit(1);
         }
-        // Accept
-        client_fd[0] = socTareas.Accept();
-        if(client_fd[0] == -1) {
+        cout << "ESCUCHANDO SOCKET" << endl;
+        for (int i=0; i<N + 1; i++) {
+            // Accept
+           MW_fd[i] = chanMasterWorker.Accept();
+
+            if(MW_fd[i] == -1) {
                 cerr << "Error en el accept: " + string(strerror(errno)) + "\n";
                 // Cerramos el socket
-                socTareas.Close(socket_fd);
+                chanMasterWorker.Close(socket_fd_masterWorker);
                 exit(1);
             }
-        //faltan las otras dos colas
-
-        cliente[0] = thread(&tareas, socTareas, 3);
-        cout << "Nuevo cliente " + to_string(0) + " aceptado" + "\n";
-        /*
-        cliente[1] = thread(&tags, monitores[1]);
-        cout << "Nuevo cliente " + to_string(1) + " aceptado" + "\n";
-        cliente[2] = thread(&QoS, monitores[2]);
-        cout << "Nuevo cliente " + to_string(2) + " aceptado" + "\n";
-        */
-
-
-        cliente[0].join();
-
-        // Cerramos el socket de tareas
-        error_code = socTareas.Close(socket_fd);
-        if (error_code == -1) {
-            cerr << "Error cerrando el socket de tareas: " + string(strerror(errno)) + " aceptado" + "\n";
+            cout << "CONEXION ESTABLECIDA" << endl;
+            MW[i] = thread(&masterWorker, ref(chanMasterWorker), MW_fd[i], ref(monitorTareas), ref(colaTareas), ref(fin));
         }
-        //falta cerrar los otros dos sockets    
+
+        for (int i=0; i<N + 1; i++) {
+            MW[i].join();
+        }
+        // Cerramos el socket del servidor
+        error_code1 = chanMasterWorker.Close(socket_fd_masterWorker);
+        if (error_code1 == -1) {
+            cerr << "Error cerrando el socket del servidor: " + string(strerror(errno)) + " aceptado" + "\n";
+        }
+        return error_code1;
     }
     else {
         cout << "Ejecutar de la siguiente forma:" << endl;

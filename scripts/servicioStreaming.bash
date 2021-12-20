@@ -7,7 +7,7 @@
 #*****************************************************************
 F_INPUT=tweets-sinProcesar.csv
 F_OUTPUT=tweets-filtrados.csv
-STREAM_PORT=4000
+STREAM_PORT=4004
 cd ..
 mkdir filtro
 flex filtro.l
@@ -17,4 +17,4 @@ gcc -lfl lex.yy.c -o filtro
 ./filtro <../${F_INPUT} >../${F_OUTPUT}
 cd ..
 make streaming
-./streaming ${STREAM_PORT} >salidaServidor.txt
+./streaming ${STREAM_PORT}

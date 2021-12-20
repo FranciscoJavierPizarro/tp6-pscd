@@ -6,7 +6,7 @@
 # Coms:   script para lanzar el programa masterWorker
 #*****************************************************************
 MW_PORT=4440
-AC_PORT=4433
+AC_PORT=4443
 cd ..
 make gestor
-./masterWorker ${MW_PORT} ${AC_PORT} >salida.txt
+./gestorDeColas ${MW_PORT} ${AC_PORT}

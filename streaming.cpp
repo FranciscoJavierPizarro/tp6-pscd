@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
             chan.Close(socket_fd);
             exit(1);
         }
-
+        cout << "ESCUCHANDO SOCKET" << endl;
         // Accept
         int client_fd = chan.Accept();
         if (client_fd == -1) {
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
             chan.Close(socket_fd);
             exit(1);
         }
-
+        cout << "CONEXION ESTABLECIDA" << endl;
         // Buffer para recibir el mensaje
         int length = 12;
         string buffer;
@@ -112,7 +112,6 @@ int main(int argc, char* argv[]) {
                 // colocamos 25 tweets en el buffer
                 getTweets(tweets,f);
                 // Enviamos la respuesta
-                cout << tweets << endl;
                 send_bytes = chan.Send(client_fd, tweets);
                 if(send_bytes == -1) {
                     string mensError(strerror(errno));
