@@ -7,7 +7,7 @@
 #*****************************************************************
 F_INPUT=tweets-sinProcesar.csv
 F_OUTPUT=tweets-filtrados.csv
-STREAM_PORT=4004
+STREAM_PORT=4000
 cd ..
 mkdir filtro
 flex filtro.l

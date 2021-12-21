@@ -20,11 +20,12 @@ const int MAX_ELEMENTOS = 50; //tamaño máximo de las colas
 class ControldeCola {
     public:
         ControldeCola();
-        template <class T> void leerCola(BoundedQueue<T> cola, T elemento);
-        template <class T> void escribirCola(BoundedQueue<T> cola, T elemento);
-
+        template <class T> bool leerCola(BoundedQueue<T>& cola, T& elemento);
+        template <class T> void escribirCola(BoundedQueue<T>& cola, T elemento);
+        void finalizar();
     private:
         int numElementos;
+        bool fin;
         mutex mtxMonitor;
         condition_variable estaEscribiendo;
         condition_variable estaBorrando;

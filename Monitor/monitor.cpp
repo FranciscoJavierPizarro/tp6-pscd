@@ -9,17 +9,17 @@
 #include <iostream>
 #include <mutex>
 #include <condition_variable>
-#include "../BoundedQueue/BoundedQueue.hpp"
 #include "monitor.hpp"
 
 using namespace std;
 
 ControldeCola::ControldeCola(){ //constructor
     numElementos = 0;
+    fin = false;
 }
 
 template <class T>
-void ControldeCola::escribirCola(BoundedQueue<T> cola, T elemento){
+void ControldeCola::escribirCola(BoundedQueue<T>& cola, T elemento){
     unique_lock<mutex> lck(mtxMonitor);
 
     while(numElementos >= MAX_ELEMENTOS){
@@ -32,15 +32,24 @@ void ControldeCola::escribirCola(BoundedQueue<T> cola, T elemento){
 }
 
 template <class T>
-void ControldeCola::leerCola(BoundedQueue<T> cola, T elemento){
+bool ControldeCola::leerCola(BoundedQueue<T>& cola, T& elemento){
     unique_lock<mutex> lck(mtxMonitor);
-
-    while(numElementos <= 0){
+    bool anyadido = false;
+    while(numElementos <= 0 && !fin){
         estaBorrando.wait(lck);
     }
+    if(numElementos > 0) {
+        numElementos--;
+        elemento = cola.first(); //guardar el elemento antes de desencolarlo
+        cola.dequeue();
+        estaEscribiendo.notify_one();
+        anyadido = true;  
+    }
+    return anyadido;
+}
 
-    elemento = cola.first(); //guardar el elemento antes de desencolarlo
-    cola.dequeue();
-    numElementos--;
-    estaEscribiendo.notify_one();  
+void ControldeCola::finalizar() {
+    unique_lock<mutex> lck(mtxMonitor);
+    fin = true;
+    estaBorrando.notify_all();
 }

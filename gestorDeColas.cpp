@@ -2,6 +2,7 @@
 // File:   gestorDeColas.cpp
 // Author: Pablo López Mosqueda
 //         Leonor Murphy Anía
+//         Francisco Javier Pizarro
 // Date:   18/12/2021
 // Coms:   Código principal del gestor de colas, este emplea monitores para
 //         gestionar los problemas de concurrencia y el tad genérico
@@ -22,7 +23,7 @@ using namespace std;
 
 const int N = 5;
 const int N_COLAS = 3;
-void masterWorker(Socket& socTareas, int fd, ControldeCola& controlTareas, BoundedQueue<string>& colaTareas, bool& fin){
+void masterWorker(Socket& socTareas, int fd, ControldeCola& controlTareas, BoundedQueue<string>& colaTareas){
     int a = 0;
     int length = 10000;
     string mensaje, datos;
@@ -38,20 +39,18 @@ void masterWorker(Socket& socTareas, int fd, ControldeCola& controlTareas, Bound
         
         if(mensaje == "FIN"){
             out = true;
-            fin = true;
-            cout << mensaje << endl;
+            controlTareas.finalizar();
         }
         else {
-            datos = mensaje.substr(mensaje.find(","),(mensaje.length() - mensaje.find(",")));
+            datos = mensaje.substr(mensaje.find(",") + 1,(mensaje.length() - mensaje.find(",")));
             mensaje = mensaje.substr(0,mensaje.find(","));
             
             if(mensaje == "PUBLISH_TAREAS"){
-                // controlTareas.escribirCola(colaTareas, elemento);
+                controlTareas.escribirCola(colaTareas, datos);
             }
             else if(mensaje == "READ_TAREAS"){
-            //     controlTareas.leerCola(colaTareas, elemento);
-                if(!fin) {
-                    int send_bytes = socTareas.Send(fd, mensaje); //enviar el elemento leído
+                if(controlTareas.leerCola(colaTareas, datos)) {
+                    int send_bytes = socTareas.Send(fd, datos); //enviar el elemento leído
                     if(send_bytes == -1) {
                         string mensError(strerror(errno));
                         cerr << "Error al enviar datos: " + mensError + "\n";
@@ -83,7 +82,6 @@ int main(int argc, char* argv[]) {
     if(argc == 3) {
         int PORT_MASTERWORKER = stoi(argv[1]);
         int PORT_ANALIZADORES = stoi(argv[2]);
-        bool fin = false;
         ControldeCola monitorTareas;
         BoundedQueue<string> colaTareas(N); 
         int MW_fd[N + 1];
@@ -116,7 +114,7 @@ int main(int argc, char* argv[]) {
                 exit(1);
             }
             cout << "CONEXION ESTABLECIDA" << endl;
-            MW[i] = thread(&masterWorker, ref(chanMasterWorker), MW_fd[i], ref(monitorTareas), ref(colaTareas), ref(fin));
+            MW[i] = thread(&masterWorker, ref(chanMasterWorker), MW_fd[i], ref(monitorTareas), ref(colaTareas));
         }
 
         for (int i=0; i<N + 1; i++) {
@@ -127,6 +125,7 @@ int main(int argc, char* argv[]) {
         if (error_code1 == -1) {
             cerr << "Error cerrando el socket del servidor: " + string(strerror(errno)) + " aceptado" + "\n";
         }
+        cout << "BYE BYE" << endl;
         return error_code1;
     }
     else {
@@ -134,6 +133,6 @@ int main(int argc, char* argv[]) {
         cout << "./gestorDeColas XXXX ZZZZ" << endl;
         cout << "siendo XXXX el número del puerto a emplear para comunicarse con masterWorker" << endl;
         cout << "siendo ZZZZ el número del puerto a emplear para comunicarse con los analizadores" << endl;
+        return 0;
     }
-    return 0;
 }

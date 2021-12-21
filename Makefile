@@ -29,7 +29,6 @@ CPPFLAGS=-I. -I${SOCKET_DIR} -O2 -std=c++11 -lsockets # Flags compilacion
 LDFLAGS=-pthread # Flags linkado threads
 
 all: streaming masterWorker gestor
-monitor: ${MONITOR}.o
 #----------------------------------------------------------------------------
 #Para gestionar opciones de compilación según la máquina: hendrix tiene sus manías
 #Descomentar la siguiente línea para compilar en hendrix
@@ -66,10 +65,6 @@ gestor: ${SOCKET}.o ${GESTOR}.o
 # Compilacion libreria de Sockets
 ${SOCKET}.o: ${SOCKET}.hpp ${SOCKET}.cpp
 	${CC} -c ${CPPFLAGS} ${SOCKET}.cpp -o ${SOCKET}.o
-#-----------------------------------------------------------
-# MONITOR
-# Compilación del monitor
-
 #-----------------------------------------------------------	
 # LIMPIEZA
 clean:

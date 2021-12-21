@@ -47,8 +47,8 @@ void createTasksBlock(string inTweets, string outTasks[TWEETS_FROM_STREAM/TWEETS
     for(int i = 0; i < TWEETS_FROM_STREAM; i++) {
         a = (inTweets.find("$" + to_string(i) + " "))+("$" + to_string(i) + " ").length();
         b = (inTweets.find_first_of("$",a)); 
-        outTasks[i/TWEETS_TO_TASK].append("$" + to_string((i) % TWEETS_TO_TASK) + inTweets.substr(a,b - a));
-        if ((i + 1) % TWEETS_TO_TASK == 0) outTasks[i/TWEETS_TO_TASK].append("$" + to_string(TWEETS_TO_TASK));
+        outTasks[i/TWEETS_TO_TASK].append("$" + to_string((i) % TWEETS_TO_TASK)+ " " + inTweets.substr(a,b - a));
+        if ((i + 1) % TWEETS_TO_TASK == 0) outTasks[i/TWEETS_TO_TASK].append("$" + to_string(TWEETS_TO_TASK) + " ");
     }
 }
 
@@ -99,13 +99,14 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
     if(socket_fd_gestor == -1) {
         
     }
+    cout << "CONEXIONES ESTABLECIDAS" << endl;
     int LENGTH = 10000;
     string tareas[5];
     string mensaje;
     int read_bytes;   //num de bytes recibidos en un mensaje
     int send_bytes;  //num de bytes enviados en un mensaje
 
-    for(int j = 0; j < 1; j++) {
+    for(int j = 0; j < 3; j++) {
         mensaje = "GET_TWEETS";
         // Enviamos el mensaje de petición al servicio de streaming
         send_bytes = chanStream.Send(socket_fd_streaming, mensaje);
@@ -172,6 +173,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
     if(error_code == -1) {
         cerr << "Error cerrando el socket: " << strerror(errno) << endl;
     }
+    cout << "CONEXIONES FINALIZADAS" << endl;
 }
 
 void worker(int PORT_GESTOR, string IP_GESTOR, int id) {
@@ -199,7 +201,7 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id) {
     if(socket_fd_gestor == -1) {
         
     }
-
+    cout << "CONEXION ESTABLECIDA" << endl;
     int LENGTH = 10000;
     string tweets[5];
     string mensaje = "";
@@ -227,7 +229,7 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id) {
             chanGestor.Close(socket_fd_gestor);
             exit(1);
         }
-
+        
         if(mensaje == MENS_FIN) { 
             out = true;
         }
@@ -263,6 +265,7 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id) {
     if(error_code == -1) {
         cerr << "Error cerrando el socket: " << strerror(errno) << endl;
     }
+    cout << "CONEXION FINALIZADA" << endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -284,6 +287,7 @@ int main(int argc, char* argv[]) {
         for(int i = 0; i < N_WORKERS; i++) {
             workers[i].join();
         }
+        cout << "BYE BYE" << endl;
     }
     else {
         cout << "Ejecutar de la siguiente forma:" << endl;
