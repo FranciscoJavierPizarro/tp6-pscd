@@ -24,6 +24,8 @@ MONITOR_DIR=Monitor
 MONITOR =${MONITOR_DIR}/monitor
 COLA_DIR=BoundedQueue
 COLA=${COLA_DIR}/BoundedQueue
+MWPROCESADO=MWprocesado
+
 
 CPPFLAGS=-I. -I${SOCKET_DIR} -O2 -std=c++11 -lsockets # Flags compilacion
 LDFLAGS=-pthread # Flags linkado threads
@@ -49,8 +51,8 @@ ${MASTERWORKER}.o: ${MASTERWORKER}.cpp
 	${CC} -c ${CPPFLAGS} ${MASTERWORKER}.cpp
 
 # Linkado
-masterWorker: ${SOCKET}.o ${MASTERWORKER}.o
-	${CC} ${LDFLAGS} ${SOCKET}.o ${MASTERWORKER}.o -o ${MASTERWORKER} ${SOCKETSFLAGS}
+masterWorker: ${SOCKET}.o ${MWPROCESADO}.o ${MASTERWORKER}.o
+	${CC} ${LDFLAGS} ${SOCKET}.o ${MASTERWORKER}.o ${MWPROCESADO}.o -o ${MASTERWORKER} ${SOCKETSFLAGS}
 #-----------------------------------------------------------
 # gestorDeColas
 # Compilacion
@@ -66,11 +68,16 @@ gestor: ${SOCKET}.o ${GESTOR}.o
 ${SOCKET}.o: ${SOCKET}.hpp ${SOCKET}.cpp
 	${CC} -c ${CPPFLAGS} ${SOCKET}.cpp -o ${SOCKET}.o
 #-----------------------------------------------------------	
+# Procesado masterWorker
+# Compilacion libreria de Sockets
+${MWPROCESADO}.o: ${MWPROCESADO}.hpp ${MWPROCESADO}.cpp
+	${CC} -c ${CPPFLAGS} ${MWPROCESADO}.cpp -o ${MWPROCESADO}.o
+#-----------------------------------------------------------	
 # LIMPIEZA
 clean:
 	$(RM) ${SOCKET}.o
 	$(RM) ${MONITOR}.o
 	$(RM) ${STREAMING} ${STREAMING}.o
-	$(RM) ${MASTERWORKER} ${MASTERWORKER}.o
+	$(RM) ${MASTERWORKER} ${MASTERWORKER}.o ${MWPROCESADO}.o
 	$(RM) ${GESTOR} ${GESTOR}.o
 	$(RM) ${FILTRO} -r
