@@ -1,3 +1,11 @@
+//------------------------------------------------------------------------------
+// File:   MWprocesado.hpp
+// Authors:Inés Román Gracia
+//         Francisco Javier Pizarro Martínez
+// Date:   22/12/2021
+// Coms:   Cabecera del módulo auxiliar MWprocesado
+//         Se encarga de definir las operaciones públicas del módulo
+//------------------------------------------------------------------------------
 #include <iostream>
 using namespace std;
 //CONSTANTES
