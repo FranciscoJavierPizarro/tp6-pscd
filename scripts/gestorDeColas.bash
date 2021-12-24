@@ -3,7 +3,7 @@
 # File:   gestorDeColas.bash
 # Author: Francisco Javier Pizarro Martínez
 # Date:   19/12/2021
-# Coms:   script para lanzar el programa masterWorker
+# Coms:   script para lanzar el programa gestorDeColas
 #*****************************************************************
 MW_PORT=4444
 AC_PORT=4443

@@ -203,55 +203,58 @@ int main(int argc, char* argv[]) {
                            ref(monitorQoS), ref(colaQoS), ref(monitorTags), ref(colaTags));
         }
 
-        // //Parte correspondiente a los analizadores
-        // int fd_analizadores;
-        // thread Tanalizadores;
-        // // Creación del canal masterWorker.
-        // Socket chanAnalizadores(PORT_ANALIZADORES);
-        // // Bind
-        // int socket_fd_Analizadores = chanAnalizadores.Bind();
-        // if (socket_fd_Analizadores == -1) {
-        //     cerr << "Error en el bind: " + string(strerror(errno)) + "\n";
-        //     exit(1);
-        // }
-        // // Listen
-        // int error_code2 = chanAnalizadores.Listen(N);
-        // if (error_code2 == -1) {
-        //     cerr << "Error en el listen: " + string(strerror(errno)) + "\n";
-        //     // Cerramos el socket
-        //     chanAnalizadores.Close(socket_fd_Analizadores);
-        //     exit(1);
-        // }
-        // cout << "ESCUCHANDO SOCKET" << endl;
+        //Parte correspondiente a los analizadores
+        int fd_analizadores[2];
+        thread Tanalizadores[2];
+        // Creación del canal masterWorker.
+        Socket chanAnalizadores(PORT_ANALIZADORES);
+        // Bind
+        int socket_fd_Analizadores = chanAnalizadores.Bind();
+        if (socket_fd_Analizadores == -1) {
+            cerr << "Error en el bind: " + string(strerror(errno)) + "\n";
+            exit(1);
+        }
+        // Listen
+        int error_code2 = chanAnalizadores.Listen(2);
+        if (error_code2 == -1) {
+            cerr << "Error en el listen: " + string(strerror(errno)) + "\n";
+            // Cerramos el socket
+            chanAnalizadores.Close(socket_fd_Analizadores);
+            exit(1);
+        }
+        cout << "ESCUCHANDO SOCKET" << endl;
 
-        // // Accept
-        // fd_analizadores = chanAnalizadores.Accept();
+        for(int i = 0; i < 2; i++) {
+            // Accept
+            fd_analizadores[i] = chanAnalizadores.Accept();
 
-        // if(fd_analizadores == -1) {
-        //     cerr << "Error en el accept: " + string(strerror(errno)) + "\n";
-        //     // Cerramos el socket
-        //     chanAnalizadores.Close(socket_fd_Analizadores);
-        //     exit(1);
-        // }
-        // cout << "CONEXION ESTABLECIDA" << endl;
-        // Tanalizadores = thread(&analizadores, ref(chanMasterWorker), fd_analizadores, ref(monitorQoS), ref(colaQoS),
-        //                         ref(monitorTags), ref(colaTags));
+            if(fd_analizadores[i] == -1) {
+                cerr << "Error en el accept: " + string(strerror(errno)) + "\n";
+                // Cerramos el socket
+                chanAnalizadores.Close(socket_fd_Analizadores);
+                exit(1);
+            }
+            cout << "CONEXION ESTABLECIDA" << endl;
+            Tanalizadores[i] = thread(&analizadores, ref(chanMasterWorker), fd_analizadores[i], ref(monitorQoS), ref(colaQoS),
+                                    ref(monitorTags), ref(colaTags));
+        }
         for (int i=0; i<N + 1; i++) {
             MW[i].join();
         }
-        // Tanalizadores.join();
-        
+        for (int i=0; i<2; i++) {
+            Tanalizadores[i].join();
+        }
         // Cerramos el socket del servidor
         error_code1 = chanMasterWorker.Close(socket_fd_masterWorker);
         if (error_code1 == -1) {
             cerr << "Error cerrando el socket del servidor: " + string(strerror(errno)) + " aceptado" + "\n";
         }
         
-        // // Cerramos el socket del servidor
-        // error_code2 = chanAnalizadores.Close(socket_fd_Analizadores);
-        // if (error_code2 == -1) {
-        //     cerr << "Error cerrando el socket del servidor: " + string(strerror(errno)) + " aceptado" + "\n";
-        // }
+        // Cerramos el socket del servidor
+        error_code2 = chanAnalizadores.Close(socket_fd_Analizadores);
+        if (error_code2 == -1) {
+            cerr << "Error cerrando el socket del servidor: " + string(strerror(errno)) + " aceptado" + "\n";
+        }
         cout << "BYE BYE" << endl;
     }
     else {

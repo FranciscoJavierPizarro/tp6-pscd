@@ -211,7 +211,7 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id) {
         }
         else{
             //PROCESAR
-            proccessTaskBlock(mensaje,perf,tags);
+            // proccessTaskBlock(mensaje,perf,tags);
             // Enviamos el mensaje de petición al gestor
             mensaje = "PUBLISH_QOS," + perf + "," + to_string(id);
             send_bytes = chanGestor.Send(socket_fd_gestor, mensaje);
@@ -244,37 +244,37 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id) {
 }
 
 int main(int argc, char* argv[]) {
-    // if(argc == 5) {
-    //     //VARIABLES DE INVOCACIÓN
-    //     int PORT_STREAMING = stoi(argv[1]);
-    //     string IP_STREAMING = string(argv[2]);
-    //     int PORT_GESTOR = stoi(argv[3]);
-    //     string IP_GESTOR = string(argv[4]);
-    //     //CREACION DE THREADS
-    //     thread mast;
-    //     thread workers[N_WORKERS];
-    //     mast = thread(&master, PORT_STREAMING, IP_STREAMING, PORT_GESTOR, IP_GESTOR);
-    //     for(int i = 0; i < N_WORKERS; i++) {
-    //         workers[i] = thread(&worker,PORT_GESTOR, IP_GESTOR, i);
-    //     }
-    //     //ESPERA FINALIZACIÓN
-    //     mast.join();
-    //     for(int i = 0; i < N_WORKERS; i++) {
-    //         workers[i].join();
-    //     }
-    //     cout << "BYE BYE" << endl;
-    // }
-    // else {
-    //     cout << "Ejecutar de la siguiente forma:" << endl;
-    //     cout << "./masterWorker XXXX YYYYYYYYY ZZZZ WWWWWWWWW" << endl;
-    //     cout << "siendo XXXX el número del puerto a emplear para comunicarse con streaming" << endl;
-    //     cout << "siendo YYYYYYYYY la ip a emplear para comunicarse con streaming" << endl;
-    //     cout << "siendo ZZZZ el número del puerto a emplear para comunicarse con gestor de colas" << endl;
-    //     cout << "siendo WWWWWWWWW la ip a emplear para comunicarse con gestor de colas" << endl;
-    // }
-    string perf, tags;
-    string pruebas = "$0 2021-10-14 19:04:12;Twitter Web App;x_y_es;RT: 11/10/2021 He mejorado bastante el vuelo #3D y ahora muestra la isla completa, y las 6 últimas coladas juntas días 6 al 11. Con datos del @CabLaPalma sobre un mapa del @IGNSpain. @lapalmaopendata @InnovaLaPalma #VigilanciaLaPalma #LaPalma #ErupciónLaPalma #VolcandeLaPalma https://t.co/3xLFCqIqCY$1 2021-10-14 19:03:31;Twitter Web App;chematierra;RT: #ErupcionLaPalma Octubre 14, continúa la erupción con fuertes rugidos y ríos de lava en #CumbreVieja #LaPalma #Canarias #España  Al día de ayer: superficie cubierta 680 Ha casas destruídas 1548 casas dañadas 86 res carretera afectada 53km Créditos  @involcan https://t.co/2BrO7pydqR$2 2021-10-14 19:03:29;Twitter for Android;IGNSpain;RT:  Video de ayer del paso del río de lava desde la ladera norte del #VolcandeLaPalma. #IGNSpain #VolcanLaPalma #ErupcionLaPalma @mitmagob @CabLaPalma @DgCanarias @IGME1849 @IGeociencias @VolcansCanarias @RTVCes https://t.co/naisBgSNR6$3 2021-10-14 19:03:20;Twitter for Android;RTVCes;RT: #erupciónLaPalma  Imágenes de las 14:15 grabadas por @Involcan en las que se registra el desborde de la colada de lava en el cono principal del #volcán en #LaPalma https://t.co/nJ1bnfQyUs$4 2021-10-14 19:03:05;Twitter Web App;i_ameztoy;RT: #LaPalma   Situación a 13 de octubre a las 06:50 UTC y evolución desde el principio del evento; La colada en la zona Norte sigue su curso  Datos de @CopernicusEMS y mapa base de @IGNSpain HD: https://t.co/OprlPNwTui  #ErupciónLaPalma #volcanCumbreVieja #LaPalmaEruption https://t.co/CsikEFJ1Xi$5";
-    proccessTaskBlock(pruebas,perf,tags);
+    if(argc == 5) {
+        //VARIABLES DE INVOCACIÓN
+        int PORT_STREAMING = stoi(argv[1]);
+        string IP_STREAMING = string(argv[2]);
+        int PORT_GESTOR = stoi(argv[3]);
+        string IP_GESTOR = string(argv[4]);
+        //CREACION DE THREADS
+        thread mast;
+        thread workers[N_WORKERS];
+        mast = thread(&master, PORT_STREAMING, IP_STREAMING, PORT_GESTOR, IP_GESTOR);
+        for(int i = 0; i < N_WORKERS; i++) {
+            workers[i] = thread(&worker,PORT_GESTOR, IP_GESTOR, i);
+        }
+        //ESPERA FINALIZACIÓN
+        mast.join();
+        for(int i = 0; i < N_WORKERS; i++) {
+            workers[i].join();
+        }
+        cout << "BYE BYE" << endl;
+    }
+    else {
+        cout << "Ejecutar de la siguiente forma:" << endl;
+        cout << "./masterWorker XXXX YYYYYYYYY ZZZZ WWWWWWWWW" << endl;
+        cout << "siendo XXXX el número del puerto a emplear para comunicarse con streaming" << endl;
+        cout << "siendo YYYYYYYYY la ip a emplear para comunicarse con streaming" << endl;
+        cout << "siendo ZZZZ el número del puerto a emplear para comunicarse con gestor de colas" << endl;
+        cout << "siendo WWWWWWWWW la ip a emplear para comunicarse con gestor de colas" << endl;
+    }
+    // string perf, tags;
+    // string pruebas = "$0 2021-10-14 19:04:12;Twitter Web App;x_y_es;RT: 11/10/2021 He mejorado bastante el vuelo #3D y ahora muestra la isla completa, y las 6 últimas coladas juntas días 6 al 11. Con datos del @CabLaPalma sobre un mapa del @IGNSpain. @lapalmaopendata @InnovaLaPalma #VigilanciaLaPalma #LaPalma #ErupciónLaPalma #VolcandeLaPalma https://t.co/3xLFCqIqCY$1 2021-10-14 19:03:31;Twitter Web App;chematierra;RT: #ErupcionLaPalma Octubre 14, continúa la erupción con fuertes rugidos y ríos de lava en #CumbreVieja #LaPalma #Canarias #España  Al día de ayer: superficie cubierta 680 Ha casas destruídas 1548 casas dañadas 86 res carretera afectada 53km Créditos  @involcan https://t.co/2BrO7pydqR$2 2021-10-14 19:03:29;Twitter for Android;IGNSpain;RT:  Video de ayer del paso del río de lava desde la ladera norte del #VolcandeLaPalma. #IGNSpain #VolcanLaPalma #ErupcionLaPalma @mitmagob @CabLaPalma @DgCanarias @IGME1849 @IGeociencias @VolcansCanarias @RTVCes https://t.co/naisBgSNR6$3 2021-10-14 19:03:20;Twitter for Android;RTVCes;RT: #erupciónLaPalma  Imágenes de las 14:15 grabadas por @Involcan en las que se registra el desborde de la colada de lava en el cono principal del #volcán en #LaPalma https://t.co/nJ1bnfQyUs$4 2021-10-14 19:03:05;Twitter Web App;i_ameztoy;RT: #LaPalma   Situación a 13 de octubre a las 06:50 UTC y evolución desde el principio del evento; La colada en la zona Norte sigue su curso  Datos de @CopernicusEMS y mapa base de @IGNSpain HD: https://t.co/OprlPNwTui  #ErupciónLaPalma #volcanCumbreVieja #LaPalmaEruption https://t.co/CsikEFJ1Xi$5";
+    // proccessTaskBlock(pruebas,perf,tags);
     // cout << perf << endl;
     // cout << tags << endl;
     return 0;
