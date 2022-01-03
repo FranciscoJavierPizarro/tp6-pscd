@@ -93,7 +93,7 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
     string tweet[TWEETS_TO_TASK];
     string campos[4];
     string date;
-    int a,b;
+    int a,b, aux;
     bool contieneTag, contieneMencion, esRT;
     //LEER ENTRADA
     for(int i = 0; i < TWEETS_TO_TASK; i++) {
@@ -166,6 +166,37 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
         else authorsO.append(campos[2] + ";");
         if(contieneTag) authorsH.append(campos[2] + ";");
         if(contieneMencion) authorsM.append(campos[2] + ";");
+
+        if(contieneTag){
+            a = 0;
+            aux = 1;
+            while(a != aux){
+                aux = a;
+                a = (campos[3].find_first_of("#",a));
+                if(aux != a) {
+                    b = campos[3].find_first_of(" ",a); 
+                    tags.append(campos[3].substr(a,b - a) + "@" + campos[2]);
+                    if(esRT) tagsRT.append(campos[3].substr(a,b - a) + "@" + campos[2]);
+                    else tagsO.append(campos[3].substr(a,b - a) + "@" + campos[2]);
+                }
+            }
+        }
+
+        if(contieneMencion){
+            a = 0;
+            aux = 1;
+            while(a != aux){
+                aux = a;
+                a = (campos[3].find_first_of("@",a));
+                //APAÑO MUY CUTRE POR BUG CUIDADO
+                if(aux != a && a < campos[3].length()) {
+                    b = campos[3].find_first_of(" ",a);
+                    mencion.append(campos[3].substr(a,b - a) + "&" + campos[2]);
+                    if(esRT) mencionRT.append(campos[3].substr(a,b - a) + "&" + campos[2]);
+                    else mencionO.append(campos[3].substr(a,b - a) + "&" + campos[2]);
+                }
+            }
+        }
 
 
     }
