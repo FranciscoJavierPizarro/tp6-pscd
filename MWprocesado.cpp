@@ -65,12 +65,6 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
     int webAppO = 0,iphoneO = 0,androidO = 0,wordpressO = 0, miscO = 0;
     int webAppH = 0,iphoneH = 0,androidH = 0,wordpressH = 0, miscH = 0;
     int webAppM = 0,iphoneM = 0,androidM = 0,wordpressM = 0, miscM = 0;
-    //Contiene los dias y horas en formato "hora"h"dia"d"mes"m de los tweets separados por ;
-    string diasHoras = "";
-    string diasHorasRT = "";
-    string diasHorasO = "";
-    string diasHorasH = "";
-    string diasHorasM = "";
     //Autores separados por ;
     //x_y_es;IGNSpain;
     string authors = "";
@@ -92,16 +86,16 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
     //VARIABLES AUXILIARES
     string tweet[TWEETS_TO_TASK];
     string campos[4];
-    string date;
     int a,b, aux;
     bool contieneTag, contieneMencion, esRT;
     //LEER ENTRADA
+    cout << "0" << endl;
     for(int i = 0; i < TWEETS_TO_TASK; i++) {
         a = (inTaskBlock.find("$" + to_string(i) + " "))+("$" + to_string(i) + " ").length();
         b = inTaskBlock.find_first_of("$",a); 
         tweet[i] = inTaskBlock.substr(a,b - a);
     }
-
+    cout << "1" << endl;
     //PROCESAR
     for(int i = 0; i < TWEETS_TO_TASK; i++) {
         a = 0;
@@ -111,12 +105,12 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
             b = tweet[i].find_first_of(";",a); 
             campos[j] = tweet[i].substr(a,b - a);
         }
-
+        cout << "2" << endl;
         contieneTag = (campos[3].find_first_of("#",0)) != 0;
         contieneMencion = (campos[3].find_first_of("@",0)) != 0;
         if(campos[3].substr(0,3) == "RT:") esRT = true;
         else esRT = false;
-
+        cout << "3" << endl;
 
         if(campos[1] == "Twitter Web App") {
             webApp++;
@@ -153,27 +147,20 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
             if(contieneTag) miscH++;
             if(contieneMencion) miscM++;
         }
-
-        fecha(campos[0], date);
-        diasHoras.append(date + ";");
-        if(esRT) diasHorasRT.append(date + ";");
-        else diasHorasO.append(date + ";");
-        if(contieneTag) diasHorasH.append(date + ";");
-        if(contieneMencion) diasHorasM.append(date + ";");
-
+        cout << "4" << endl;
         authors.append(campos[2] + ";");
         if(esRT) authorsRT.append(campos[2] + ";");
         else authorsO.append(campos[2] + ";");
         if(contieneTag) authorsH.append(campos[2] + ";");
         if(contieneMencion) authorsM.append(campos[2] + ";");
-
+        cout << "5" << endl;
         if(contieneTag){
             a = 0;
             aux = 1;
             while(a != aux){
                 aux = a;
                 a = (campos[3].find_first_of("#",a));
-                if(aux != a) {
+                if(aux != a && a < campos[3].length()) {
                     b = campos[3].find_first_of(" ",a); 
                     tags.append(campos[3].substr(a,b - a) + "@" + campos[2]);
                     if(esRT) tagsRT.append(campos[3].substr(a,b - a) + "@" + campos[2]);
@@ -181,8 +168,8 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
                 }
             }
         }
-
-        if(contieneMencion){
+        cout << "6" << endl;
+        if(contieneMencion && contieneTag){
             a = 0;
             aux = 1;
             while(a != aux){
@@ -197,7 +184,7 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
                 }
             }
         }
-
+        cout << "7" << endl;
 
     }
 
@@ -210,11 +197,9 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
     result += "$2 " + to_string(webAppO) + "/" + to_string(iphoneO) + "/" + to_string(androidO) + "/" + to_string(wordpressO) + "/" + to_string(miscO);
     result += "$3 " + to_string(webAppH) + "/" + to_string(iphoneH) + "/" + to_string(androidH) + "/" + to_string(wordpressH) + "/" + to_string(miscH);
     result += "$4 " + to_string(webAppM) + "/" + to_string(iphoneM) + "/" + to_string(androidM) + "/" + to_string(wordpressM) + "/" + to_string(miscM);
-    result += "$5 " + diasHoras + "/" + diasHorasRT + "/" + diasHorasO + "/" + diasHorasH + diasHorasM; 
-
-    result += "$6 " + authors + "/" + authorsRT + "/" + authorsO + "/" + authorsH + "/" + authorsM; 
-    result += "$7 " + tags + "%" + tagsRT + "%" + tagsO; 
-    result += "$8 " + mencion + "%" + mencionRT + "%" + mencionO;
+    result += "$5 " + authors + "/" + authorsRT + "/" + authorsO + "/" + authorsH + "/" + authorsM; 
+    result += "$6 " + tags + "%" + tagsRT + "%" + tagsO; 
+    result += "$7 " + mencion + "%" + mencionRT + "%" + mencionO;
 
     t2 = clock()/CLOCKS_PER_SEC;
     total += (t2-t1);
