@@ -102,8 +102,6 @@ int main(int argc, char* argv[]) {
                 chan.Close(socket_fd);
             }
 
-            cout << "Mensaje recibido: '" + buffer + "'\n";
-
             // Si recibimos "FIN" --> Fin de la comunicación
             if (buffer == MENS_FIN) {
                 out = true; // Salir del bucle
@@ -130,7 +128,7 @@ int main(int argc, char* argv[]) {
             string mensError(strerror(errno));
             cerr << "Error cerrando el socket del cliente: " + mensError + "\n";
         }
-
+        cout << "CONEXION FINALIZADA" << endl;
         // Cerramos el socket del servidor
         error_code = chan.Close(socket_fd);
         if (error_code == -1) {
@@ -138,7 +136,7 @@ int main(int argc, char* argv[]) {
             cerr << "Error cerrando el socket del servidor: " + mensError + "\n";
         }
         // Mensaje de despedida
-        cout << "Servicio finalizado" << endl;
+        cout << "BYE BYE" << endl;
 
         return error_code;
     }

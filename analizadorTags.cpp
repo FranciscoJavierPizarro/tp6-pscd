@@ -79,17 +79,18 @@ int main(int argc, char* argv[]) {
 
             else {
                 // tratamiento de la información recibida
-                cout << respuesta + "\n";   // solo para pruebas
+                // cout << respuesta + "\n";   // solo para pruebas
             }
-
-            // Enviamos el mensaje de petición al servicio gestor
-            send_bytes = chanGestor.Send(socket_fd_gestor, MESSAGE);
-                
-            if(send_bytes == -1) {
-                cerr << "Error al enviar datos: " << strerror(errno) << endl;
-                // Cerramos el socket
-                chanGestor.Close(socket_fd_gestor);
-                exit(1);
+            if(!out) {
+                 // Enviamos el mensaje de petición al servicio gestor
+                send_bytes = chanGestor.Send(socket_fd_gestor, MESSAGE);
+                    
+                if(send_bytes == -1) {
+                    cerr << "Error al enviar datos: " << strerror(errno) << endl;
+                    // Cerramos el socket
+                    chanGestor.Close(socket_fd_gestor);
+                    exit(1);
+                }
             }
         }
         

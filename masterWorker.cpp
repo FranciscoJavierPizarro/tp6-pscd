@@ -213,7 +213,7 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id) {
             //PROCESAR
             proccessTaskBlock(mensaje,perf,tags);
             // Enviamos el mensaje de petición al gestor
-            mensaje = "PUBLISH_QOS," + perf + "," + to_string(id);
+            mensaje = "PUBLISH_QoS," + perf + "," + to_string(id);
             send_bytes = chanGestor.Send(socket_fd_gestor, mensaje);
                 
             if(send_bytes == -1) {

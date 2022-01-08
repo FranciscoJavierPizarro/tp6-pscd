@@ -25,7 +25,7 @@ const int N = 5;
 const int N_COLAS = 3;
 void masterWorker(Socket& socTareas, int fd, ControldeCola& controlTareas, BoundedQueue<string>& colaTareas,
                   ControldeCola& controlQoS, BoundedQueue<string>& colaQoS, ControldeCola& controlTags, 
-                  BoundedQueue<string>& colaTags){
+                  BoundedQueue<string>& colaTags, bool finalizados[N], int n){
     int length = 10000;
     string mensaje, datos;
     bool out = false;
@@ -40,6 +40,7 @@ void masterWorker(Socket& socTareas, int fd, ControldeCola& controlTareas, Bound
         
         if(mensaje == "FIN") {
             out = true;
+            finalizados[n] = true;
             controlTareas.finalizar();
         }
         else {
@@ -70,16 +71,25 @@ void masterWorker(Socket& socTareas, int fd, ControldeCola& controlTareas, Bound
                         socTareas.Close(fd);
                         exit(1);
                     }
+                    finalizados[n] = true;
                     out = true;
                 }
             }
             else if(mensaje == "PUBLISH_QoS") {
-                // controlQoS.escribirCola(colaQoS, datos);
+                controlQoS.escribirCola(colaQoS, datos);
             }
             else if(mensaje == "PUBLISH_TAGS"){
-                // controlTags.escribirCola(colaTags, datos);
+                controlTags.escribirCola(colaTags, datos);
             }
         }
+    }
+    bool auxb = finalizados[0];
+    for(int i = 1; i < N + 1; i++) {
+        auxb = auxb && finalizados[i];
+    }
+    if(auxb) {
+        controlQoS.finalizar();
+        controlTags.finalizar();
     }
     socTareas.Close(fd); //cerrar el socket
     cout << "CONEXION FINALIZADA" << endl;
@@ -116,6 +126,7 @@ void analizadores(Socket& socAnalizadores, int fd, ControldeCola& controlQoS, Bo
             }
             else {
                 mensaje = "FIN";
+                cout << "FINALIZANDO ANALIZADOR RENDIMIENTO" << endl;
                 int send_bytes = socAnalizadores.Send(fd, mensaje); //enviar el elemento leído
                 if(send_bytes == -1) {
                     string mensError(strerror(errno));
@@ -140,6 +151,7 @@ void analizadores(Socket& socAnalizadores, int fd, ControldeCola& controlQoS, Bo
             }
             else {
                 mensaje = "FIN";
+                cout << "FINALIZANDO ANALIZADOR TAGS" << endl;
                 int send_bytes = socAnalizadores.Send(fd, mensaje); //enviar el elemento leído
                 if(send_bytes == -1) {
                     string mensError(strerror(errno));
@@ -164,10 +176,13 @@ int main(int argc, char* argv[]) {
         ControldeCola monitorTareas;
         ControldeCola monitorQoS;
         ControldeCola monitorTags;
-        BoundedQueue<string> colaTareas(N);
-        BoundedQueue<string> colaQoS(N);
-        BoundedQueue<string> colaTags(N);
-        
+        BoundedQueue<string> colaTareas(500);
+        BoundedQueue<string> colaQoS(500);
+        BoundedQueue<string> colaTags(500);
+        bool finalizado[N + 1];
+        for(int i = 0; i < N + 1;i++) {
+            finalizado[i] = false;
+        }
         //Parte correspondiente a los master/workers 
         int MW_fd[N + 1];
         thread MW[N + 1];
@@ -200,7 +215,7 @@ int main(int argc, char* argv[]) {
             }
             cout << "CONEXION ESTABLECIDA" << endl;
             MW[i] = thread(&masterWorker, ref(chanMasterWorker), MW_fd[i], ref(monitorTareas), ref(colaTareas), 
-                           ref(monitorQoS), ref(colaQoS), ref(monitorTags), ref(colaTags));
+                           ref(monitorQoS), ref(colaQoS), ref(monitorTags), ref(colaTags), ref(finalizado), i);
         }
 
         //Parte correspondiente a los analizadores
