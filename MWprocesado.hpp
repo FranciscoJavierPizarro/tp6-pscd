@@ -7,6 +7,7 @@
 //         Se encarga de definir las operaciones públicas del módulo
 //------------------------------------------------------------------------------
 #include <iostream>
+#include "LinkedList/LinkedList.hpp"
 using namespace std;
 //CONSTANTES
 const int N_WORKERS = 5;

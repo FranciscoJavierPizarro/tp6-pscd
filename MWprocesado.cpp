@@ -57,7 +57,7 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
     //Los datos sin terminacion son todos, los que terminan por rt los rts 
     //y los que terminan por o los originales, los que terminan por H contienen un #
     //y los que terminan por M contienen una mencion
-    
+    LinkedList<string> lista(60);
     //Analizador TAGs:
     //Cada variable almacena el número de tweets en cada tipo de dispostivo
     int webApp = 0,iphone = 0,android = 0,wordpress = 0, misc = 0;
@@ -150,13 +150,16 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
                 if(aux != a && a < campos[3].length()) {
                     b = campos[3].find_first_of(" ",a); 
                     tags.append(campos[3].substr(a,b - a) + "&" + campos[2]);
-                    //FALTA EVITAR DUPLICADOS EN # usando lista enlazada
-                    if(esRT) tagsRT.append(campos[3].substr(a,b - a) + "&" + campos[2]);
-                    else tagsO.append(campos[3].substr(a,b - a) + "&" + campos[2]);
-                    if(contieneMencion) tagsM.append(campos[3].substr(a,b - a));
+                    if(!lista.esta(campos[3].substr(a,b - a))) {
+                        if(esRT) tagsRT.append(campos[3].substr(a,b - a) + "&" + campos[2]);
+                        else tagsO.append(campos[3].substr(a,b - a) + "&" + campos[2]);
+                        if(contieneMencion) tagsM.append(campos[3].substr(a,b - a));
+                        lista.add(campos[3].substr(a,b - a));
+                    }
                 }
             }
             tagsM.append("&"+ campos[2]);
+            lista.empty();
         }
     }
 

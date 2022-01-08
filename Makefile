@@ -30,6 +30,10 @@ MONITOR_DIR=Monitor
 MONITOR =${MONITOR_DIR}/monitor
 COLA_DIR=BoundedQueue
 COLA=${COLA_DIR}/BoundedQueue
+LISTA_DIR=LinkedList
+LISTA=${LISTA_DIR}/LinkedList
+SEMAPHORE_DIR=Semaphore_V4
+SEMAPHORE=${SEMAPHORE_DIR}/Semaphore_V4
 MWPROCESADO=MWprocesado
 
 
@@ -53,7 +57,7 @@ streaming: ${SOCKET}.o ${STREAMING}.o
 #-----------------------------------------------------------
 # masterWorker
 # Compilacion
-${MASTERWORKER}.o: ${MASTERWORKER}.cpp 
+${MASTERWORKER}.o: ${MASTERWORKER}.cpp
 	${CC} -c ${CPPFLAGS} ${MASTERWORKER}.cpp
 
 # Linkado
@@ -76,8 +80,8 @@ ${TAGS_ANALIZER}.o: ${TAGS_ANALIZER}.cpp
 	${CC} -c ${CPPFLAGS} ${TAGS_ANALIZER}.cpp
 
 # Linkado
-analizadorTags: ${SOCKET}.o ${TAGS_ANALIZER}.o
-	${CC} ${LDFLAGS} ${SOCKET}.o ${TAGS_ANALIZER}.o -o ${TAGS_ANALIZER} ${SOCKETSFLAGS}
+analizadorTags: ${SOCKET}.o ${TAGS_ANALIZER}.o ${SEMAPHORE}.o
+	${CC} ${LDFLAGS} ${SOCKET}.o ${TAGS_ANALIZER}.o ${SEMAPHORE}.o -o ${TAGS_ANALIZER} ${SOCKETSFLAGS}
 #-----------------------------------------------------------
 # QOS_ANALIZER
 # Compilacion
@@ -94,9 +98,14 @@ ${SOCKET}.o: ${SOCKET}.hpp ${SOCKET}.cpp
 	${CC} -c ${CPPFLAGS} ${SOCKET}.cpp -o ${SOCKET}.o
 #-----------------------------------------------------------	
 # Procesado masterWorker
-# Compilacion libreria de Sockets
-${MWPROCESADO}.o: ${MWPROCESADO}.hpp ${MWPROCESADO}.cpp
+# Compilacion módulo auxiliar
+${MWPROCESADO}.o: ${MWPROCESADO}.hpp ${MWPROCESADO}.cpp ${LISTA}.hpp ${LISTA}.cpp
 	${CC} -c ${CPPFLAGS} ${MWPROCESADO}.cpp -o ${MWPROCESADO}.o
+#-----------------------------------------------------------	
+# Semáforo
+# Compilacion semáforo
+${SEMAPHORE}.o: ${SEMAPHORE}.hpp ${SEMAPHORE}.cpp
+	${CC} -c ${SEMAPHORE}.cpp -o ${SEMAPHORE}.o ${CPPFLAGS}
 #-----------------------------------------------------------	
 # LIMPIEZA
 clean:
@@ -108,3 +117,4 @@ clean:
 	$(RM) ${TAGS_ANALIZER} ${TAGS_ANALIZER}.o
 	$(RM) ${QOS_ANALIZER} ${QOS_ANALIZER}.o
 	$(RM) ${FILTRO} -r
+	$(RM) ${SEMAPHORE}.o
