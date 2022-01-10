@@ -55,6 +55,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
     if(socket_fd_streaming == -1) {
         
     }
+    cout << "CONEXION STREAMING ESTABLECIDA" << endl;
     // Conectamos con el servidor. Probamos varias conexiones
     count = 0;
 
@@ -74,7 +75,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
     if(socket_fd_gestor == -1) {
         
     }
-    cout << "CONEXIONES ESTABLECIDAS" << endl;
+    cout << "CONEXION GESTOR ESTABLECIDA" << endl;
     int LENGTH = 10000;
     string tareas[5];
     string mensaje;

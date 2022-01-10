@@ -7,7 +7,7 @@
 #*****************************************************************
 F_INPUT=tweets-sinProcesar.csv
 F_OUTPUT=tweets-filtrados.csv
-STREAM_PORT=4000
+STREAM_PORT=31051
 cd ..
 mkdir filtro
 flex filtro.l
@@ -16,5 +16,16 @@ cd filtro
 gcc -lfl lex.yy.c -o filtro
 ./filtro <../${F_INPUT} >../${F_OUTPUT}
 cd ..
+echo "==================="
+echo " FILTRADO EXITOSO"
+echo "==================="
+if [[ $ARCH = "sunos-sun4" ]]
+then
+gmake -f Makefile_hendrix streaming
+else
 make streaming
+fi
+echo "==================="
+echo "COMPILACIÓN EXITOSA"
+echo "==================="
 ./streaming ${STREAM_PORT}

@@ -11,7 +11,7 @@
 //http://en.cppreference.com/w/cpp/thread/condition_variable
 //La estudiaremos con más detalle cuando tratemos en la asignatura la parte de "monitores"
 
-#include <Semaphore_V4.hpp>
+#include "Semaphore_V4.hpp"
 
 //----------------------------------------------------------
 Semaphore::Semaphore(const int n) {

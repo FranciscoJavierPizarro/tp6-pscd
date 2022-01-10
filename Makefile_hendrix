@@ -1,9 +1,9 @@
 #*****************************************************************
-# File:   Makefile
+# File:   Makefile_hendrix
 # Authors:Francisco Javier Pizarro Martínez
 #		  Axel Isaac Pazmiño Ortega
 #	      Alicia Lázaro Huerta
-# Date:   1/12/2021
+# Date:   10/01/2022
 # Coms:   Makefile para el tp-6 de PSCD
 # Options:all -> compila todo
 #		  clean -> limpia todos los archivos generados al compilar
@@ -14,7 +14,7 @@
 #		  analizadorTags -> compila el programa analizadorTags
 #		  analizadorRendimiento -> compila el programa analizadorRendimiento
 #*****************************************************************
-SOCKETSFLAGS= -Wall
+	SOCKETSFLAGS= -Wall -lsocket -lnsl -lrt
 
 #---------------------------------------------------------
 CC=g++
