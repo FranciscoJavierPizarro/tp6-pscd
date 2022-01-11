@@ -16,7 +16,11 @@ gmake -f Makefile_hendrix masterWorker
 else
 make masterWorker
 fi
-echo "==================="
+cd exec/
+echo "===================="
 echo "COMPILACIÓN EXITOSA"
-echo "==================="
+echo "===================="
 ./masterWorker ${STREAM_PORT} ${IP_STREAM} ${GESTOR_PORT} ${IP_GESTOR}
+echo "===================="
+echo "EJECUCIÓN FINALIZADA"
+echo "===================="

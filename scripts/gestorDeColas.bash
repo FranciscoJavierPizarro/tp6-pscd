@@ -10,11 +10,15 @@ AC_PORT=31053
 cd ..
 if [[ $ARCH = "sunos-sun4" ]]
 then
-gmake -f Makefile_hendrix gestorDeColas
+gmake gestorDeColas
 else
 make gestorDeColas
 fi
-echo "==================="
+cd exec/
+echo "===================="
 echo "COMPILACIÓN EXITOSA"
-echo "==================="
+echo "===================="
 ./gestorDeColas ${MW_PORT} ${AC_PORT}
+echo "===================="
+echo "EJECUCIÓN FINALIZADA"
+echo "===================="

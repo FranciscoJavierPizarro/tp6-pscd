@@ -10,14 +10,18 @@ IP_GESTOR=155.210.152.184
 cd ..
 if [[ $ARCH = "sunos-sun4" ]]
 then
-gmake -f Makefile_hendrix analizadorTags
-gmake -f Makefile_hendrix analizadorRendimiento
+gmake analizadorTags
+gmake analizadorRendimiento
 else
 make analizadorTags
 make analizadorRendimiento
 fi
-echo "==================="
+cd exec/
+echo "===================="
 echo "COMPILACIÓN EXITOSA"
-echo "==================="
+echo "===================="
 ./analizadorRendimiento ${GESTOR_PORT} ${IP_GESTOR} &
 ./analizadorTags ${GESTOR_PORT} ${IP_GESTOR}
+echo "===================="
+echo "EJECUCIÓN FINALIZADA"
+echo "===================="

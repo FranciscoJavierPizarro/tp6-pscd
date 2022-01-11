@@ -8,27 +8,22 @@
 F_INPUT=tweets-sinProcesar.csv
 F_OUTPUT=tweets-filtrados.csv
 STREAM_PORT=31051
-cd ..
-if [[F_OUTPUT -ne]]
-then
-mkdir filtro
-flex filtro.l
-mv lex.yy.c filtro/
-cd filtro
-gcc -lfl lex.yy.c -o filtro
-./filtro <../${F_INPUT} >../${F_OUTPUT}
-cd ..
+if [ ! -e "${F_OUTPUT}" ]
+then 
+./ejecutarFiltro.bash
 fi
-echo "==================="
-echo " FILTRADO EXITOSO"
-echo "==================="
+cd ..
 if [[ $ARCH = "sunos-sun4" ]]
 then
-gmake -f Makefile_hendrix streaming
+gmake streaming
 else
 make streaming
 fi
-echo "==================="
+cd exec/
+echo "===================="
 echo "COMPILACIÓN EXITOSA"
-echo "==================="
+echo "===================="
 ./streaming ${STREAM_PORT}
+echo "===================="
+echo "EJECUCIÓN FINALIZADA"
+echo "===================="

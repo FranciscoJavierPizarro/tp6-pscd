@@ -8,9 +8,13 @@
 F_INPUT=tweets-sinProcesar.csv
 F_OUTPUT=tweets-filtrados.csv
 cd ..
-mkdir filtro
-flex filtro.l
-mv lex.yy.c filtro/
-cd filtro
-gcc -lfl lex.yy.c -o filtro
-./filtro <../${F_INPUT} >../${F_OUTPUT}
+if [ ! -e "exec/filtro" ]
+then
+flex src/filtro.l
+mv lex.yy.c bin/maquina1/
+gcc -lfl bin/maquina1/lex.yy.c -o exec/filtro
+fi
+./exec/filtro <${F_INPUT} >${F_OUTPUT}
+echo "===================="
+echo "  FILTRADO EXITOSO  "
+echo "===================="
