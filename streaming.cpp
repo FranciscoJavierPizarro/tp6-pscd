@@ -19,10 +19,10 @@ using namespace std;
 //-------------------------------------------------------------
 // Pre:---
 // Post: Devuelve 25 tweets de tweets-filtrados.csv en buffer
-void getTweets(string& buffer,ifstream& f) {
+void getTweets(string tweets[25],ifstream& f) {
     int maxTweets = 25;
+    string aux;
     for (int i = 0; i < maxTweets; i++) {
-        string aux;
         getline(f,aux);
         // en caso de llegar al final del fichero:
         if (f.eof()) {
@@ -32,7 +32,7 @@ void getTweets(string& buffer,ifstream& f) {
             getline(f,cabecera); // ignoramos la cabecera
         }
         else {
-            buffer = buffer + "$" + to_string(i) + " " + aux;
+            tweets[i] = "$" + to_string(i) + " " + aux;
         }
     }
 }
@@ -85,11 +85,11 @@ int main(int argc, char* argv[]) {
         }
         cout << "CONEXION ESTABLECIDA" << endl;
         // Buffer para recibir el mensaje
-        int length = 12;
+        int length = 50;
         string buffer;
         int rcv_bytes;   //num de bytes recibidos en un mensaje
         int send_bytes;  //num de bytes enviados en un mensaje
-
+        int len;
         bool out = false; // Inicialmente no salir del bucle
         while (!out) {
             // Recibimos el mensaje del cliente
@@ -106,19 +106,24 @@ int main(int argc, char* argv[]) {
             if (buffer == MENS_FIN) {
                 out = true; // Salir del bucle
             } else {
-                string tweets;
+                cout << "TWEETS SOLICITADOS" << endl;
+                string tweets[25];
                 // colocamos 25 tweets en el buffer
                 getTweets(tweets,f);
-                // Enviamos la respuesta
-                send_bytes = chan.Send(client_fd, tweets);
-                if(send_bytes == -1) {
-                    string mensError(strerror(errno));
-                    cerr << "Error al enviar datos: " + mensError + "\n";
-                    // Cerramos los sockets
-                    chan.Close(client_fd);
-                    chan.Close(socket_fd);
-                    exit(1);
+                for(int i = 0; i < 25; i++) {
+                    // Enviamos la respuesta
+                    send_bytes = chan.Send(client_fd, tweets[i]);
+                    // send_bytes = chan.Send(client_fd, " ");
+                    if(send_bytes == -1) {
+                        string mensError(strerror(errno));
+                        cerr << "Error al enviar datos: " + mensError + "\n";
+                        // Cerramos los sockets
+                        chan.Close(client_fd);
+                        chan.Close(socket_fd);
+                        exit(1);
+                    }
                 }
+                cout << "TWEETS ENVIADOS" << endl;
             }
         }
 

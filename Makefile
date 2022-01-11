@@ -10,7 +10,7 @@
 #		  streaming -> compila el programa de streaming
 #		  filtro -> compila el programa de filtro
 #		  masterWorker -> compila el programa masterWorker
-#		  gestor -> compila el programa gestorDeColas
+#		  gestorDeColas -> compila el programa gestorDeColas
 #		  analizadorTags -> compila el programa analizadorTags
 #		  analizadorRendimiento -> compila el programa analizadorRendimiento
 #*****************************************************************
@@ -45,7 +45,7 @@ M1=${BIN}/maquina1/
 M2=${BIN}/maquina2/
 M3=${BIN}/maquina3/
 M4=${BIN}/maquina4/
-all: streaming masterWorker gestor analizadorTags analizadorRendimiento
+all: streaming masterWorker gestorDeColas analizadorTags analizadorRendimiento
 #-----------------------------------------------------------
 # Streaming
 # Compilacion
@@ -53,7 +53,7 @@ ${M1}${STREAMING}.o: ${STREAMING}.cpp
 	${CC} -c ${CPPFLAGS} ${STREAMING}.cpp -o ${M1}${STREAMING}.o
 
 # Linkado
-streaming: ${M1}${SOCKET}.o ${M1}${STREAMING}.o
+streaming: ${M1}${SOCKET_DIR}.o ${M1}${STREAMING}.o
 	${CC} ${LDFLAGS} ${M1}${SOCKET_DIR}.o ${M1}${STREAMING}.o -o ${STREAMING} ${SOCKETSFLAGS}
 #-----------------------------------------------------------
 # masterWorker
@@ -62,7 +62,7 @@ ${M3}${MASTERWORKER}.o: ${MASTERWORKER}.cpp
 	${CC} -c ${CPPFLAGS} ${MASTERWORKER}.cpp -o ${M3}${MASTERWORKER}.o
 
 # Linkado
-masterWorker: ${M3}${SOCKET}.o ${M3}${MWPROCESADO}.o ${M3}${MASTERWORKER}.o
+masterWorker: ${M3}${SOCKET_DIR}.o ${M3}${MWPROCESADO}.o ${M3}${MASTERWORKER}.o
 	${CC} ${LDFLAGS} ${M3}${SOCKET_DIR}.o ${M3}${MWPROCESADO}.o ${M3}${MASTERWORKER}.o  -o ${MASTERWORKER} ${SOCKETSFLAGS}
 #-----------------------------------------------------------
 # gestorDeColas
@@ -71,7 +71,7 @@ ${M2}${GESTOR}.o: ${GESTOR}.cpp ${COLA}.hpp ${COLA}.cpp ${MONITOR}.hpp ${MONITOR
 	${CC} -c ${CPPFLAGS} ${GESTOR}.cpp -o ${M2}${GESTOR}.o
 
 # Linkado
-gestor: ${M2}${SOCKET}.o ${M2}${GESTOR}.o
+gestorDeColas: ${M2}${SOCKET_DIR}.o ${M2}${GESTOR}.o
 	${CC} ${LDFLAGS} ${M2}${SOCKET_DIR}.o ${M2}${GESTOR}.o -o ${GESTOR} ${SOCKETSFLAGS}
 #-----------------------------------------------------------
 #-----------------------------------------------------------
@@ -81,7 +81,7 @@ ${M4}${TAGS_ANALIZER}.o: ${TAGS_ANALIZER}.cpp
 	${CC} -c ${CPPFLAGS} ${TAGS_ANALIZER}.cpp -o ${M4}${TAGS_ANALIZER}.o
 
 # Linkado
-analizadorTags: ${M4}${SOCKET}.o ${M4}${SEMAPHORE}.o ${M4}${TAGS_ANALIZER}.o
+analizadorTags: ${M4}${SOCKET_DIR}.o ${M4}${SEMAPHORE}.o ${M4}${TAGS_ANALIZER}.o
 	${CC} ${LDFLAGS} ${M4}${SOCKET_DIR}.o ${M4}${SEMAPHORE_DIR}.o ${M4}${TAGS_ANALIZER}.o -o ${TAGS_ANALIZER} ${SOCKETSFLAGS}
 #-----------------------------------------------------------
 # QOS_ANALIZER
@@ -90,18 +90,18 @@ ${M4}${QOS_ANALIZER}.o: ${QOS_ANALIZER}.cpp
 	${CC} -c ${CPPFLAGS} ${QOS_ANALIZER}.cpp -o ${M4}${QOS_ANALIZER}.o
 
 # Linkado
-analizadorRendimiento: ${M4}${SOCKET}.o ${M4}${QOS_ANALIZER}.o
+analizadorRendimiento: ${M4}${SOCKET_DIR}.o ${M4}${QOS_ANALIZER}.o
 	${CC} ${LDFLAGS} ${M4}${SOCKET_DIR}.o ${M4}${QOS_ANALIZER}.o -o ${QOS_ANALIZER} ${SOCKETSFLAGS}
 #-----------------------------------------------------------
 # SOCKETS
 # Compilacion libreria de Sockets
-${M1}${SOCKET}.o: ${SOCKET}.hpp ${SOCKET}.cpp
+${M1}${SOCKET_DIR}.o: ${SOCKET}.hpp ${SOCKET}.cpp
 	${CC} -c ${CPPFLAGS} ${SOCKET}.cpp -o ${M1}${SOCKET_DIR}.o
-${M2}${SOCKET}.o: ${SOCKET}.hpp ${SOCKET}.cpp
+${M2}${SOCKET_DIR}.o: ${SOCKET}.hpp ${SOCKET}.cpp
 	${CC} -c ${CPPFLAGS} ${SOCKET}.cpp -o ${M2}${SOCKET_DIR}.o
-${M3}${SOCKET}.o: ${SOCKET}.hpp ${SOCKET}.cpp
+${M3}${SOCKET_DIR}.o: ${SOCKET}.hpp ${SOCKET}.cpp
 	${CC} -c ${CPPFLAGS} ${SOCKET}.cpp -o ${M3}${SOCKET_DIR}.o
-${M4}${SOCKET}.o: ${SOCKET}.hpp ${SOCKET}.cpp
+${M4}${SOCKET_DIR}.o: ${SOCKET}.hpp ${SOCKET}.cpp
 	${CC} -c ${CPPFLAGS} ${SOCKET}.cpp -o ${M4}${SOCKET_DIR}.o
 #-----------------------------------------------------------	
 # Procesado masterWorker

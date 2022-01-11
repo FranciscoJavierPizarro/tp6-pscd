@@ -49,30 +49,41 @@ int main(int argc, char* argv[]) {
 
         // declaración de variables para intercambio de mensajes:
         const string MESSAGE = "READ_TAGS";
-        string respuesta;
-        int send_bytes,read_bytes;
-        int LENGTH = 10000;
+        string respuesta,aux;
+        int send_bytes,read_bytes, n, len;
+        int LENGTH = 500;
         // Enviamos el mensaje de petición al servicio gestor
-        send_bytes = chanGestor.Send(socket_fd_gestor, MESSAGE);
-            
-        if(send_bytes == -1) {
-            cerr << "Error al enviar datos: " << strerror(errno) << endl;
-            // Cerramos el socket
-            chanGestor.Close(socket_fd_gestor);
-            exit(1);
+        len = MESSAGE.length();
+        n = len/500;
+        for(int k = 0; k < 25; k++) {
+            if(k <  n) send_bytes = chanGestor.Send(socket_fd_gestor, MESSAGE.substr(k*500,500));
+            else if(k == n) send_bytes = chanGestor.Send(socket_fd_gestor, MESSAGE.substr(k*500,500)+"$$");
+            else send_bytes = chanGestor.Send(socket_fd_gestor, " ");
+            if(send_bytes == -1) {
+                cerr << "Error al enviar datos al gestor: " << strerror(errno) << endl;
+                // Cerramos el socket
+                chanGestor.Close(socket_fd_gestor);
+                exit(1);
+            }
         }
 
         bool out = false;
         while (!out) {
-            // Recibimos la respuesta del servidor de streaming
-            read_bytes = chanGestor.Recv(socket_fd_gestor, respuesta, LENGTH);
-        
-            if(read_bytes == -1) {
-                cerr << "Error al recibir datos: " << strerror(errno) << endl;
-                // Cerramos el socket
-                chanGestor.Close(socket_fd_gestor);
-                exit(1);
-            } 
+            respuesta = "";
+            for(int i = 0; i < 25; i++) {
+                // Recibimos la respuesta del servidor gestor
+                read_bytes = chanGestor.Recv(socket_fd_gestor, aux, LENGTH);
+                
+                if(read_bytes == -1) {
+                    cerr << "Error al recibir datos: " << strerror(errno) << endl;
+                    // Cerramos el socket
+                    chanGestor.Close(socket_fd_gestor);
+                    exit(1);
+                }
+                respuesta.append(aux);
+            }
+            respuesta = respuesta.substr(0,respuesta.find("$$"));
+            
             
             if (respuesta == MENS_FIN) {
                 out = true;
@@ -84,14 +95,18 @@ int main(int argc, char* argv[]) {
 
             }
             if(respuesta != MENS_FIN) {
-                // Enviamos el mensaje de petición al servicio gestor
-                send_bytes = chanGestor.Send(socket_fd_gestor, MESSAGE);
-                    
-                if(send_bytes == -1) {
-                    cerr << "Error al enviar datos: " << strerror(errno) << endl;
-                    // Cerramos el socket
-                    chanGestor.Close(socket_fd_gestor);
-                    exit(1);
+                len = MESSAGE.length();
+                n = len/500;
+                for(int k = 0; k < 25; k++) {
+                    if(k <  n) send_bytes = chanGestor.Send(socket_fd_gestor, MESSAGE.substr(k*500,500));
+                    else if(k == n) send_bytes = chanGestor.Send(socket_fd_gestor, MESSAGE.substr(k*500,500)+"$$");
+                    else send_bytes = chanGestor.Send(socket_fd_gestor, " ");
+                    if(send_bytes == -1) {
+                        cerr << "Error al enviar datos al gestor: " << strerror(errno) << endl;
+                        // Cerramos el socket
+                        chanGestor.Close(socket_fd_gestor);
+                        exit(1);
+                    }
                 }
             }
         }

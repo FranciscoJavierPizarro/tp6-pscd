@@ -6,7 +6,7 @@
 # Coms:   script para lanzar los programas analizadores
 #*****************************************************************
 GESTOR_PORT=31053
-IP_GESTOR=152.210.152.184
+IP_GESTOR=155.210.152.184
 cd ..
 if [[ $ARCH = "sunos-sun4" ]]
 then

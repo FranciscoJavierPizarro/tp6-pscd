@@ -9,6 +9,8 @@ F_INPUT=tweets-sinProcesar.csv
 F_OUTPUT=tweets-filtrados.csv
 STREAM_PORT=31051
 cd ..
+if [[F_OUTPUT -ne]]
+then
 mkdir filtro
 flex filtro.l
 mv lex.yy.c filtro/
@@ -16,6 +18,7 @@ cd filtro
 gcc -lfl lex.yy.c -o filtro
 ./filtro <../${F_INPUT} >../${F_OUTPUT}
 cd ..
+fi
 echo "==================="
 echo " FILTRADO EXITOSO"
 echo "==================="
