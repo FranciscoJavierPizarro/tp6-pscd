@@ -254,7 +254,18 @@ int main(int argc, char* argv[]) {
         // Creación del canal masterWorker.
         Socket chanMasterWorker(PORT_MASTERWORKER);
         // Bind
-        int socket_fd_masterWorker = chanMasterWorker.Bind();
+        int socket_fd_masterWorker;
+        const int MAX_ATTEMPS = 15;
+        int count = 0;
+        do {
+            socket_fd_masterWorker = chanMasterWorker.Bind();
+            if (socket_fd_masterWorker == -1) {
+                cerr << "Error en el bind: " + string(strerror(errno)) + "\n";
+                sleep(count);
+                cerr << "REINTENTANDO" << endl;
+                count++;
+            }
+        }while(socket_fd_masterWorker == -1 && count < MAX_ATTEMPS);
         if (socket_fd_masterWorker == -1) {
             cerr << "Error en el bind: " + string(strerror(errno)) + "\n";
             exit(1);
@@ -267,7 +278,7 @@ int main(int argc, char* argv[]) {
             chanMasterWorker.Close(socket_fd_masterWorker);
             exit(1);
         }
-        cout << "ESCUCHANDO SOCKET" << endl;
+        cout << "ESCUCHANDO SOCKET MASTER-WORKERS" << endl;
         for (int i=0; i<N + 1; i++) {
             // Accept
            MW_fd[i] = chanMasterWorker.Accept();
@@ -289,7 +300,17 @@ int main(int argc, char* argv[]) {
         // Creación del canal masterWorker.
         Socket chanAnalizadores(PORT_ANALIZADORES);
         // Bind
-        int socket_fd_Analizadores = chanAnalizadores.Bind();
+        int socket_fd_Analizadores;
+        count = 0;
+        do {
+            socket_fd_Analizadores = chanAnalizadores.Bind();
+            if (socket_fd_Analizadores == -1) {
+                cerr << "Error en el bind: " + string(strerror(errno)) + "\n";
+                sleep(count);
+                cerr << "REINTENTANDO" << endl;
+                count++;
+            }
+        }while(socket_fd_Analizadores == -1 && count < MAX_ATTEMPS);
         if (socket_fd_Analizadores == -1) {
             cerr << "Error en el bind: " + string(strerror(errno)) + "\n";
             exit(1);
@@ -302,7 +323,7 @@ int main(int argc, char* argv[]) {
             chanAnalizadores.Close(socket_fd_Analizadores);
             exit(1);
         }
-        cout << "ESCUCHANDO SOCKET" << endl;
+        cout << "ESCUCHANDO SOCKET ANALIZADORES" << endl;
 
         for(int i = 0; i < 2; i++) {
             // Accept

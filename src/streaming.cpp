@@ -56,7 +56,18 @@ int main(int argc, char* argv[]) {
         Socket chan(PORT);
 
         // Bind
-        int socket_fd =chan.Bind();
+        const int MAX_ATTEMPS = 15;
+        int count = 0;
+        int socket_fd;
+        do {
+            socket_fd = chan.Bind();
+            if (socket_fd == -1) {
+                cerr << "Error en el bind: " + string(strerror(errno)) + "\n";
+                sleep(count);
+                cerr << "REINTENTANDO" << endl;
+                count++;
+            }
+        }while(socket_fd == -1 && count < MAX_ATTEMPS);
         if (socket_fd == -1) {
             string mensError(strerror(errno));
             cerr << "Error en el bind: " + mensError + "\n";
