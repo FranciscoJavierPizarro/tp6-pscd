@@ -16,11 +16,12 @@ else
 make analizadorTags
 make analizadorRendimiento
 fi
+mv analizadorTags exec/
 cd exec/
 echo "===================="
 echo "COMPILACIÓN EXITOSA"
 echo "===================="
-./analizadorRendimiento ${GESTOR_PORT} ${IP_GESTOR} &
+./analizadorRendimiento ${GESTOR_PORT} ${IP_GESTOR}
 ./analizadorTags ${GESTOR_PORT} ${IP_GESTOR}
 echo "===================="
 echo "EJECUCIÓN FINALIZADA"

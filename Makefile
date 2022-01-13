@@ -40,6 +40,9 @@ LISTA=${LISTA_DIR}/LinkedList
 SEMAPHORE_DIR=Semaphore_V4
 SEMAPHORE=${SEMAPHORE_DIR}/Semaphore_V4
 MWPROCESADO=MWprocesado
+NODO_USER=nodoUsuario
+NODO_TAG=nodoTag
+LISTA_G=listaGenerica
 
 CPPFLAGS=-I. -I${SOCKET_DIR} -O2 -std=c++11 -lsockets# Flags compilacion
 LDFLAGS=-pthread # Flags linkado threads
@@ -86,12 +89,22 @@ ${EXEC}${GESTOR}: ${M2}${SOCKET_DIR}.o ${M2}${GESTOR}.o
 #-----------------------------------------------------------
 # TAGS_ANALIZER
 # Compilacion
-${M4}${TAGS_ANALIZER}.o: ${SRC}${TAGS_ANALIZER}.cpp 
+${M4}${TAGS_ANALIZER}.o: ${SRC}${TAGS_ANALIZER}.cpp ${SRC}${LISTA_G}.h ${SRC}${NODO_TAG}.h ${SRC}${NODO_USER}.h
 	${CC} -c ${CPPFLAGS} ${SRC}${TAGS_ANALIZER}.cpp -o ${M4}${TAGS_ANALIZER}.o
 
 # Linkado
-${EXEC}${TAGS_ANALIZER}: ${M4}${SOCKET_DIR}.o ${M4}${SEMAPHORE}.o ${M4}${TAGS_ANALIZER}.o
-	${CC} ${LDFLAGS} ${M4}${SOCKET_DIR}.o ${M4}${SEMAPHORE_DIR}.o ${M4}${TAGS_ANALIZER}.o -o ${EXEC}${TAGS_ANALIZER} ${SOCKETSFLAGS}
+${EXEC}${TAGS_ANALIZER}: ${M4}${SOCKET_DIR}.o ${M4}${SEMAPHORE}.o ${M4}${TAGS_ANALIZER}.o ${M4}${NODO_TAG}.o ${M4}${NODO_USER}.o
+	${CC} ${LDFLAGS} ${M4}${SOCKET_DIR}.o ${M4}${SEMAPHORE_DIR}.o ${M4}${TAGS_ANALIZER}.o ${M4}${NODO_TAG}.o ${M4}${NODO_USER}.o -o ${EXEC}${TAGS_ANALIZER} ${SOCKETSFLAGS}
+#-----------------------------------------------------------
+# NODO_TAG
+# Compilacion
+${M4}${NODO_TAG}.o: ${SRC}${NODO_TAG}.cpp ${SRC}${NODO_TAG}.h
+	${CC} -c ${CPPFLAGS} ${SRC}${NODO_TAG}.cpp -o ${M4}${NODO_TAG}.o
+#-----------------------------------------------------------
+# NODO_USER
+# Compilacion
+${M4}${NODO_USER}.o: ${SRC}${NODO_USER}.cpp ${SRC}${NODO_USER}.h
+	${CC} -c ${CPPFLAGS} ${SRC}${NODO_USER}.cpp -o ${M4}${NODO_USER}.o
 #-----------------------------------------------------------
 # QOS_ANALIZER
 # Compilacion
