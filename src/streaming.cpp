@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
             chan.Close(socket_fd);
             exit(1);
         }
-        cout << "ESCUCHANDO SOCKET" << endl;
+        cout << "\033[1;4;5mESCUCHANDO SOCKET\033[0m" << endl;
         // Accept
         int client_fd = chan.Accept();
         if (client_fd == -1) {
@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
             chan.Close(socket_fd);
             exit(1);
         }
-        cout << "CONEXION ESTABLECIDA" << endl;
+        cout << "\033[32;1;4;5mCONEXION ESTABLECIDA\033[0m" << endl;
         // Buffer para recibir el mensaje
         int length = 50;
         string buffer;
@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
             string mensError(strerror(errno));
             cerr << "Error cerrando el socket del cliente: " + mensError + "\n";
         }
-        cout << "CONEXION FINALIZADA" << endl;
+        cout << "\033[32;1;4;5mCONEXION FINALIZADA\033[0m" << endl;
         // Cerramos el socket del servidor
         error_code = chan.Close(socket_fd);
         if (error_code == -1) {
@@ -157,8 +157,8 @@ int main(int argc, char* argv[]) {
         return error_code;
     }
     else {
-        cout << "Ejecutar de la siguiente forma:" << endl;
-        cout << "./streaming XXXX" << endl;
+        cout << "Ejecutar de la siguiente forma:" << "\n";
+        cout << "./streaming XXXX" << "\n";
         cout << "siendo XXXX el número del puerto a emplear" << endl;
     }
     return 0;

@@ -10,6 +10,8 @@
 #include "MWprocesado.hpp"
 #include <chrono>
 using namespace chrono;
+
+
 //Comm: Procesa el bloque de entrada y genera los bloques de tareas
 //Pre:  inTweets contiene un string formado por tantos tweets como TWEETS_FROM_STREAM
 //      cada tweet tiene a su izquierda "$i" i € [0,TWEETS_FROM_STREAM) y a su derecha
@@ -31,12 +33,13 @@ void createTasksBlock(string inTweets, string outTasks[TWEETS_FROM_STREAM/TWEETS
     }
 }
 
+//Comms:Función auxiliar interna para el manejo de fechas
+//Pre:2021-10-14 19:01:05
+//Post:"hora"h"dia"d"mes"m
 void fecha(string inDate, string& outDate) {
     int a,b;
     outDate = "";
     string hora,dia,mes;
-    //2021-10-14 19:01:05
-    //"hora"h"dia"d"mes"m
     a = inDate.find_first_of("-") + 1;
     b = inDate.find_first_of("-",a);
     mes = inDate.substr(a,b-a);
@@ -52,9 +55,6 @@ void fecha(string inDate, string& outDate) {
 void proccessTaskBlock(string& inTaskBlock, string& performance, string& result) {
     // tomamos tiempo al principio de la ejecución
     steady_clock::time_point inicio = steady_clock::now();
-    // código del que se quiere medir el tiempo de ejecución
-    
-    //RT: 11/10/2021 He mejorado bastante el vuelo #3D y ahora muestra la isla completa, y las 6 últimas coladas juntas días 6 al 11. Con datos del @CabLaPalma sobre un mapa del @IGNSpain. @lapalmaopendata @InnovaLaPalma #VigilanciaLaPalma #LaPalma #ErupciónLaPalma #VolcandeLaPalma https://t.co/3xLFCqIqCY
     
     //Los datos sin terminacion son todos, los que terminan por rt los rts 
     //y los que terminan por o los originales, los que terminan por H contienen un #
@@ -67,8 +67,7 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
     int webAppO = 0,iphoneO = 0,androidO = 0,wordpressO = 0, miscO = 0;
     int webAppH = 0,iphoneH = 0,androidH = 0,wordpressH = 0, miscH = 0;
     int webAppM = 0,iphoneM = 0,androidM = 0,wordpressM = 0, miscM = 0;
-    //TAGS separados por #
-    //#ErupcionLaPalma&author#volcán&author
+    //TAGS separados
     string tags;
     string tagsRT;
     string tagsO;
@@ -133,6 +132,7 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
             if(contieneTag) miscH++;
             if(contieneMencion) miscM++;
         }
+        
         if(contieneTag){
             a = 0;
             aux = 1;
@@ -165,9 +165,6 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
         }
     }
 
-
-
-
     result = "";
     result += "$0 " + to_string(webApp) + "/" + to_string(iphone) + "/" + to_string(android) + "/" + to_string(wordpress) + "/" + to_string(misc);
     result += "$1 " + to_string(webAppRT) + "/" + to_string(iphoneRT) + "/" + to_string(androidRT) + "/" + to_string(wordpressRT) + "/" + to_string(miscRT);
@@ -179,8 +176,6 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
     // tomamos tiempo al final de la ejecución
     steady_clock::time_point fin = steady_clock::now();
 
-
     float duracion = duration_cast<microseconds>(fin - inicio).count(); // duración en microsegundos
     performance = to_string(duracion);
-    // cout << "========================\n" << tags.length() << endl;
 }

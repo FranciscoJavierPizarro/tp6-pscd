@@ -1,20 +1,17 @@
 #!/bin/bash
 #*****************************************************************
-# File:   analizadores.bash
+# File:   qosAnalyzer.bash
 # Author: Francisco Javier Pizarro Martínez
-# Date:   24/12/2021
-# Coms:   script para lanzar los programas analizadores
+# Date:   14/01/2022
+# Coms:   script para lanzar el analizador qos
 #*****************************************************************
 GESTOR_PORT=32030
-# IP_GESTOR=155.210.152.184
-IP_GESTOR="localhost"
+IP_GESTOR=155.210.152.184
 cd ..
 if [[ $ARCH = "sunos-sun4" ]]
 then
-gmake analizadorTags
 gmake analizadorRendimiento
 else
-make analizadorTags
 make analizadorRendimiento
 fi
 cd exec/
@@ -22,7 +19,6 @@ echo "===================="
 echo "COMPILACIÓN EXITOSA"
 echo "===================="
 ./analizadorRendimiento ${GESTOR_PORT} ${IP_GESTOR}
-./analizadorTags ${GESTOR_PORT} ${IP_GESTOR}
 echo "===================="
 echo "EJECUCIÓN FINALIZADA"
 echo "===================="

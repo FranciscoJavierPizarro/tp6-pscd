@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
         if(socket_fd_gestor == -1) {
             
         }
-        cout << "CONEXION ESTABLECIDA" << endl;
+        cout << "\033[32;1;4;5mCONEXION ESTABLECIDA\033[0m" << endl;
 
         // declaración de variables para intercambio de mensajes:
         const string MESSAGE =  "READ_QoS";
@@ -78,6 +78,7 @@ int main(int argc, char* argv[]) {
                 exit(1);
             }
         }
+        cout << "DATOS SOLICITADOS" << endl;
 
         bool out = false;
         while (!out) {
@@ -95,7 +96,7 @@ int main(int argc, char* argv[]) {
                 respuesta.append(aux);
             }
             respuesta = respuesta.substr(0,respuesta.find("$$"));
-            
+            cout << "DATOS RECIBIDOS" << endl;
             
             if (respuesta == MENS_FIN) {
                 out = true;
@@ -146,11 +147,20 @@ int main(int argc, char* argv[]) {
                         exit(1);
                     }
                 }
+                cout << "DATOS SOLICITADOS" << endl;
             }
         }
+        // Cerramos el socket
+        int error_code = chanGestor.Close(socket_fd_gestor);
+        if(error_code == -1) {
+            cerr << "Error cerrando el socket: " << strerror(errno) << endl;
+        }
+        cout << "\033[32;1;4;5mCONEXION FINALIZADA\033[0m" << endl;
+
+
         Media = Media / nDatos;
         for(int i = 0; i < N_WORKERS; i++) MediaV[i] = MediaV[i] / procesados[i];
-        cout << "RESULTADOS GENERALES" << "\n";
+        cout << "\033[1;4;5mRESULTADOS GENERALES\033[0m" << "\n";
         cout << "============================================" << "\n";
         cout << "Tiempo de procesado medio general: " << Media << "\n";
         cout << "Tiempo máximo de procesado general: " << Max << "\n";
@@ -160,7 +170,7 @@ int main(int argc, char* argv[]) {
         cout << "RESULTADOS INDIVIDUALES" << "\n";
         for(int i = 0; i < N_WORKERS; i++) {
             cout << "============================================" << "\n";
-            cout << "WORKER " << i << "\n";
+            cout << "\033[1;4;5mWORKER " << i << "\n\033[0m";
             cout << "Número de paquetes procesados: " << procesados[i] << "\n";
             cout << "Tiempo medio de procesado: " << MediaV[i] << "\n";
             cout << "Tiempo minimo de procesado: " << MinV[i] << "\n";

@@ -36,8 +36,7 @@ public:
     //Post: this=< d_1 ... d_n d > 
     void add(const T d);
     //-----------------------------------------------------
-    //Pre:  
-    //Post: 
+    //Post: devuelve si d € a la cola
     bool esta(const T d);
     //-----------------------------------------------------
     //Pre:  this=< d_1 ... d_n >

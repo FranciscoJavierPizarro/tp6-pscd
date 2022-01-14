@@ -24,4 +24,5 @@ const int TWEETS_TO_TASK = 5;
 //      "$j" j € (0,TWEETS_TO_TASK], esto esta precedido por "PUBLISH_TAREAS,"
 void createTasksBlock(string inTweets, string outTasks[TWEETS_FROM_STREAM/TWEETS_TO_TASK]);
 
+//Comm: Procesa un bloque de tareas y devuelve sus resultados
 void proccessTaskBlock(string& inTaskBlock, string& performance, string& tags);
