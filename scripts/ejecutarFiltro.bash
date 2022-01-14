@@ -14,7 +14,10 @@ flex src/filtro.l
 mv lex.yy.c bin/maquina1/
 gcc -lfl bin/maquina1/lex.yy.c -o exec/filtro
 fi
-./exec/filtro <${F_INPUT} >${F_OUTPUT}
+if [ -e ${F_INPUT} ]
+then
+./exec/filtro <${F_INPUT} >exec/${F_OUTPUT}
 echo "===================="
 echo "  FILTRADO EXITOSO  "
 echo "===================="
+fi

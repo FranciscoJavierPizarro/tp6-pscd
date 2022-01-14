@@ -12,13 +12,14 @@
 //         siendo ZZZZ el número del puerto a emplear para comunicarse con gestor de colas
 //         siendo WWWWWWWWW la ip a emplear para comunicarse con gestor de colas
 //------------------------------------------------------------------------------
+#include "Semaphore_V4/Semaphore_V4.hpp"
 #include "Socket/Socket.hpp"
 #include "MWprocesado.hpp"
 #include <thread>
 #include <ctime>
 using namespace std;
 
-void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_GESTOR) {
+void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_GESTOR, Semaphore& sem) {
     string MENS_FIN = "FIN";
     // Creación del socket con el que se llevará a cabo
     // la comunicación con el servidor.
@@ -55,6 +56,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
     count = 0;
     cout << "CONECTANDO CON GESTOR" << endl;
     int socket_fd_gestor;
+    sem.wait();
     do {
         // Conexión con el servidor
         socket_fd_gestor = chanGestor.Connect();
@@ -74,6 +76,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
         chanGestor.Close(socket_fd_gestor);
         exit(1);   
     }
+    sem.signal();
     cout << "CONEXION GESTOR ESTABLECIDA" << endl;
     int LENGTH = 500;
     string tareas[5];
@@ -175,7 +178,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
     cout << "CONEXIONES FINALIZADAS" << endl;
 }
 
-void worker(int PORT_GESTOR, string IP_GESTOR, int id) {
+void worker(int PORT_GESTOR, string IP_GESTOR, int id, Semaphore& sem) {
     string MENS_FIN = "FIN";
     // Creación del socket con el que se llevará a cabo
     // la comunicación con el servidor gestor.
@@ -185,6 +188,7 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id) {
     const int MAX_ATTEMPS = 10;
     int count = 0;
     int socket_fd_gestor;
+    sem.wait();
     do {
         // Conexión con el servidor
         socket_fd_gestor = chanGestor.Connect();
@@ -205,6 +209,7 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id) {
         chanGestor.Close(socket_fd_gestor);
         exit(1);   
     }
+    sem.signal();
     cout << "CONEXION ESTABLECIDA" << endl;
     int LENGTH = 500;
     string tweets[5];
@@ -259,6 +264,8 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id) {
         }
         else{
             //PROCESAR
+            perf = "";
+            tags = "";
             proccessTaskBlock(mensaje,perf,tags);
             cout << "BLOQUE DE TAREAS PROCESADO" << id << endl;
             // Enviamos el mensaje de petición al gestor
@@ -267,7 +274,7 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id) {
             n = len/500;
             for(int k = 0; k < 25; k++) {
                 if(k <  n) send_bytes = chanGestor.Send(socket_fd_gestor, mensaje.substr(k*500,500));
-                else if(k == n) send_bytes = chanGestor.Send(socket_fd_gestor, mensaje.substr(k*500,500)+"$$");
+                else if(k == n) send_bytes = chanGestor.Send(socket_fd_gestor, mensaje.substr(k*500,498)+"$$");
                 else send_bytes = chanGestor.Send(socket_fd_gestor, " ");
                 if(send_bytes == -1) {
                     cerr << "Error al enviar datos al gestor: " << strerror(errno) << endl;
@@ -282,7 +289,7 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id) {
             n = len/500;
             for(int k = 0; k < 25; k++) {
                 if(k <  n) send_bytes = chanGestor.Send(socket_fd_gestor, mensaje.substr(k*500,500));
-                else if(k == n) send_bytes = chanGestor.Send(socket_fd_gestor, mensaje.substr(k*500,500)+"$$");
+                else if(k == n) send_bytes = chanGestor.Send(socket_fd_gestor, mensaje.substr(k*500,498)+"$$");
                 else send_bytes = chanGestor.Send(socket_fd_gestor, " ");
                 if(send_bytes == -1) {
                     cerr << "Error al enviar datos al gestor: " << strerror(errno) << endl;
@@ -308,19 +315,16 @@ int main(int argc, char* argv[]) {
         //VARIABLES DE INVOCACIÓN
         int PORT_STREAMING = stoi(argv[1]);
         string IP_STREAMING = string(argv[2]);
-        int PORT_GESTOR[N_WORKERS + 1];
-        PORT_GESTOR[N_WORKERS] = stoi(argv[3]);
-        for(int i = 0; i < N_WORKERS; i++) PORT_GESTOR[i] = PORT_GESTOR[N_WORKERS];
-        string IP_GESTOR[N_WORKERS + 1];
-        IP_GESTOR[N_WORKERS] = string(argv[4]);
-        for(int i = 0; i < N_WORKERS; i++) IP_GESTOR[i] = IP_GESTOR[N_WORKERS];
+        int PORT_GESTOR = stoi(argv[3]);
+        string IP_GESTOR = string(argv[4]);
         //CREACION DE THREADS
         thread mast;
         thread workers[N_WORKERS];
+        Semaphore sem(1);
         cout << "THREADS INICIANDOSE" << endl;
-        mast = thread(&master, PORT_STREAMING, IP_STREAMING, PORT_GESTOR[N_WORKERS], IP_GESTOR[N_WORKERS]);
+        mast = thread(&master, PORT_STREAMING, IP_STREAMING, PORT_GESTOR, IP_GESTOR, ref(sem));
         for(int i = 0; i < N_WORKERS; i++) {
-            workers[i] = thread(&worker,PORT_GESTOR[i], IP_GESTOR[i], i);
+            workers[i] = thread(&worker,PORT_GESTOR, IP_GESTOR, i, ref(sem));
         }
         cout << "THREADS INICIADOS" << endl;
         //ESPERA FINALIZACIÓN

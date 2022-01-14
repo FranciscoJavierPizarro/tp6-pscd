@@ -74,8 +74,8 @@ ${M3}${MASTERWORKER}.o: ${SRC}${MASTERWORKER}.cpp
 	${CC} -c ${CPPFLAGS} ${SRC}${MASTERWORKER}.cpp -o ${M3}${MASTERWORKER}.o
 
 # Linkado
-${EXEC}${MASTERWORKER}: ${M3}${SOCKET_DIR}.o ${M3}${MWPROCESADO}.o ${M3}${MASTERWORKER}.o
-	${CC} ${LDFLAGS} ${M3}${SOCKET_DIR}.o ${M3}${MWPROCESADO}.o ${M3}${MASTERWORKER}.o  -o ${EXEC}${MASTERWORKER} ${SOCKETSFLAGS}
+${EXEC}${MASTERWORKER}: ${M3}${SOCKET_DIR}.o ${M3}${MWPROCESADO}.o ${M3}${SEMAPHORE}.o ${M3}${MASTERWORKER}.o
+	${CC} ${LDFLAGS} ${M3}${SOCKET_DIR}.o ${M3}${MWPROCESADO}.o ${M3}${SEMAPHORE_DIR}.o ${M3}${MASTERWORKER}.o  -o ${EXEC}${MASTERWORKER} ${SOCKETSFLAGS}
 #-----------------------------------------------------------
 # gestorDeColas
 # Compilacion
@@ -133,6 +133,8 @@ ${M3}${MWPROCESADO}.o: ${SRC}${MWPROCESADO}.hpp ${SRC}${MWPROCESADO}.cpp ${SRC}$
 #-----------------------------------------------------------	
 # Semáforo
 # Compilacion semáforo
+${M3}${SEMAPHORE}.o: ${SEMAPHORE}.hpp ${SEMAPHORE}.cpp
+	${CC} -c ${SEMAPHORE}.cpp -o ${M3}${SEMAPHORE_DIR}.o ${CPPFLAGS}
 ${M4}${SEMAPHORE}.o: ${SEMAPHORE}.hpp ${SEMAPHORE}.cpp
 	${CC} -c ${SEMAPHORE}.cpp -o ${M4}${SEMAPHORE_DIR}.o ${CPPFLAGS}
 #-----------------------------------------------------------	

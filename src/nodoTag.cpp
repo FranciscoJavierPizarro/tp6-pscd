@@ -59,55 +59,56 @@ string mostrarQuienHM(const nodoRT nodo) {
 
 /* FUNCIONES PARA MODIFICAR PARTES DEL NODO */
 
-void actTotal(nodoRT& nodo, const int ap) {
-    nodo.apHashtag = nodo.apHashtag + ap;
+void actTotal(nodoRT* nodo, const int ap) {
+    cout << "modificando apHahstag...\n";
+    nodo->apHashtag = nodo->apHashtag + ap;
 }
 
-void actQuienTotal(nodoRT& nodo,const string autor) {
-    if (nodo.quienAH.empty()) {
-        nodo.quienAH = autor;
+void actQuienTotal(nodoRT* nodo,const string autor) {
+    if (nodo->quienAH.empty()) {
+        nodo->quienAH = autor;
     }
     else {
-        nodo.quienAH = nodo.quienAH + "/" + autor;
+        nodo->quienAH = nodo->quienAH + "/" + autor;
     }
     
 }
 
-void actApHashtagT(nodoRT& nodo, const int ap) {
-    nodo.apHashtagT = nodo.apHashtagT + ap;
+void actApHashtagT(nodoRT* nodo, const int ap) {
+    nodo->apHashtagT = nodo->apHashtagT + ap;
 }
 
-void actQuienHashtagT(nodoRT& nodo, const string autor) {
-    if (nodo.quienAHT.empty()) {
-        nodo.quienAHT = autor;
+void actQuienHashtagT(nodoRT* nodo, const string autor) {
+    if (nodo->quienAHT.empty()) {
+        nodo->quienAHT = autor;
     }
     else {
-        nodo.quienAHT = nodo.quienAHT + "/" + autor;
+        nodo->quienAHT = nodo->quienAHT + "/" + autor;
     }
 }
 
-void actApHashtagRT(nodoRT& nodo, const int ap) {
-    nodo.apHashtagRT = nodo.apHashtagRT + ap;
+void actApHashtagRT(nodoRT* nodo, const int ap) {
+    nodo->apHashtagRT = nodo->apHashtagRT + ap;
 }
 
-void actQuienHashtagRT(nodoRT& nodo, const string autor) {
-    if (nodo.quienAHRT.empty()) {
-        nodo.quienAHRT = autor;
-    }
-    else {
-        nodo.quienAHRT = nodo.quienAHRT + "/" + autor;
-    }
-}
-
-void actApHashtagM(nodoRT& nodo, const int ap) {
-    nodo.apHashtagM = nodo.apHashtagM + ap;
-}
-
-void actQuienHashtagM(nodoRT& nodo,const string buffer) {
-    if (nodo.quienAHM.empty()) {
-        nodo.quienAHM = buffer;
+void actQuienHashtagRT(nodoRT* nodo, const string autor) {
+    if (nodo->quienAHRT.empty()) {
+        nodo->quienAHRT = autor;
     }
     else {
-        nodo.quienAHM = nodo.quienAHM + "/" + buffer;
+        nodo->quienAHRT = nodo->quienAHRT + "/" + autor;
+    }
+}
+
+void actApHashtagM(nodoRT* nodo, const int ap) {
+    nodo->apHashtagM = nodo->apHashtagM + ap;
+}
+
+void actQuienHashtagM(nodoRT* nodo,const string buffer) {
+    if (nodo->quienAHM.empty()) {
+        nodo->quienAHM = buffer;
+    }
+    else {
+        nodo->quienAHM = nodo->quienAHM + "/" + buffer;
     }
 }

@@ -82,56 +82,6 @@ Semaphore sigoTM(0);
 string tagsRT,tagsO,tagsM;
 
 /********************************** FUNCIONES AUXILIARES ***********************************/
-// Pre: soc tiene establecida una conexión con el gestor de colas y debe haber suficientes datos como para llenar el buffer
-// Post: devuelve el buffer inicializado con los primeros datos a procesar
-void inicializarBuffer(Socket& soc,int socket_fd_gestor, const string mensaje, const int leng) {
-    cout << "-----------------\nINICIALIZANDO VECTOR\n-----------------\n";
-    string respuesta,aux;
-    int read_bytes,send_bytes;
-    int len = mensaje.length();
-    int n = len/500;
-    for(int k = 0; k < 25; k++) {
-        if(k <  n) send_bytes = soc.Send(socket_fd_gestor, mensaje.substr(k*500,500));
-        else if(k == n) send_bytes = soc.Send(socket_fd_gestor, mensaje.substr(k*500,500)+"$$");
-        else send_bytes = soc.Send(socket_fd_gestor, " ");
-        if(send_bytes == -1) {
-            cerr << "Error al enviar datos al gestor: " << strerror(errno) << endl;
-            // Cerramos el socket
-            soc.Close(socket_fd_gestor);
-            exit(1);
-        }
-    }
-    for (int i = 0; i < BUFFSIZE; i++) {
-        respuesta = "";
-        for(int i = 0; i < 25; i++) {
-            // Recibimos la respuesta del servidor gestor
-            read_bytes = soc.Recv(socket_fd_gestor, aux, leng);
-                
-            if(read_bytes == -1) {
-                cerr << "Error al recibir datos: " << strerror(errno) << endl;
-                // Cerramos el socket
-                soc.Close(socket_fd_gestor);
-                exit(1);
-            }
-            respuesta.append(aux);
-        }
-        respuesta = respuesta.substr(0,respuesta.find("$$"));
-
-        buffer[i] = respuesta;
-        for(int k = 0; k < 25; k++) {
-            if(k <  n) send_bytes = soc.Send(socket_fd_gestor, mensaje.substr(k*500,500));
-            else if(k == n) send_bytes = soc.Send(socket_fd_gestor, mensaje.substr(k*500,500)+"$$");
-            else send_bytes = soc.Send(socket_fd_gestor, " ");
-            if(send_bytes == -1) {
-                cerr << "Error al enviar datos al gestor: " << strerror(errno) << endl;
-                // Cerramos el socket
-                soc.Close(socket_fd_gestor);
-                exit(1);
-            }
-        }
-    }
-}
-
 // Pre: buffer es un string con la estructura del mensaje depositado en la cola de resultados:
 //      buffer = $0 + información de resultados + $1 + info + ... + $5 + info
 //      infoDeseada > 0 AND infoDeseada <= 5
@@ -139,7 +89,7 @@ void inicializarBuffer(Socket& soc,int socket_fd_gestor, const string mensaje, c
 string obtenerTokenLista(const int infoDeseada,const string buffer) {
     int posIn,posFin;
     string token;
-    posIn = buffer.find("$" + to_string(infoDeseada),0) + 2; // el 2 es para saltarnos el caracter "$" e infoDeseada
+    posIn = buffer.find("$" + to_string(infoDeseada),0) + 3; // el 2 es para saltarnos el caracter "$" e infoDeseada
     if (infoDeseada == 6) { // caso especial ya que es el final
         token = buffer.substr(posIn,buffer.length()-posIn);
     }
@@ -147,6 +97,7 @@ string obtenerTokenLista(const int infoDeseada,const string buffer) {
         posFin = buffer.find_first_of('$',posIn);
         token = buffer.substr(posIn,posFin-posIn);
     }
+    cout << "TOKEN LISTA OBTENIDO: " + token + "\n"; 
     return token;
 }
 
@@ -169,6 +120,7 @@ void obtenerToken(int& posIn,const string buffer,const char delimitador, string&
         resultado = buffer.substr(posIn,i-posIn);
         posIn = i + 1;
     }
+    cout << "token obtenido: " + resultado + "\n";
 }
 
 // Pre: hashtag es un hashtags válido dentro de las normas de twitter.
@@ -182,24 +134,31 @@ void estandarizarHashtag(string& hashtag) {
             tolower(hashtag[i]);
         }
         if (hashtag[i] == 'á') {
+            cout << "tilde encontrada\n";
             hashtag[i] = 'a';
         }
         else if (hashtag[i] == 'é') {
+            cout << "tilde encontrada\n";
             hashtag[i] = 'e';
         }
         else if (hashtag[i] == 'í') {
+            cout << "tilde encontrada\n";
             hashtag[i] = 'i';
         }
         else if (hashtag[i] == 'ó') {
+            cout << "tilde encontrada\n";
             hashtag[i] = 'o';
         }
         else if (hashtag[i] == 'ú') {
+            cout << "tilde encontrada\n";
             hashtag[i] = 'u';
         }
         else if (hashtag[i] == 'ñ') {
+            cout << "n~ encontrada\n";
             hashtag[i] ='n';
         }
     }
+    cout << "HASHTAG ESTANDARIZADO: " + hashtag + "\n";
 }
 
 // Pre: Ordenar es un vector de structs de tipo nodoRG
@@ -219,58 +178,78 @@ void ordenacion(nodoRG ordenar[], int limite) {
     }
 }
 
+void mostrarResultadosHashtag() {
+    nodoRT aux;
+    iniciarIterador(listaTags);
+    cout << "-----------TOP 10 HASHTAGS-----------\n";
+    int i = 1;
+    while(existeSiguiente(listaTags)) {
+        aux = siguiente(listaTags);
+        cout << "HASHTAG " + to_string(i) + ": " + identificador(aux) << endl;
+        cout << "Total de apariciones: " << total(aux) << endl;
+        cout << "Número de tweets con el hashtag: " << mostrarHashtagT(aux) << endl;
+        cout << "Número de retweets con el hashtag: " << mostrarHashtagRT(aux) << endl;
+        cout << "Número de tweets con el hashtag y contienen menciones: " << mostrarHashtagM(aux) << endl;
+    }
+}
+
 /********************************** HILOS (Procesos) del analizadorTags: ***********************************/
 
 // Pre: ---
 // Post: mientras no hay más datos que leer,lee del buffer, procesa cada elemento hasta size, y el resultado 
 //       (descrito en la declaración de su lista) lo almacena en listaGlobales. 
 void globalAnalyzer() {
+    cout << "\nEMPEZANDO THREAD GLOBAL_ANALYZER\n";
     // variables
     bool fin = false;
     while(!fin) {
+        cout << "ESPERANDO PERMISO PARA LEER\n";
+        sigoGlobales.wait();
         for (int i = 0; i < size; i++) {
             string aux = buffer[i];
             string usoAuxiliar = obtenerTokenLista(0,aux);
             int puntero = 0;
             string usos;
-            char delimitador = '/';
             bool hayToken;
 
             for (int j = 0; j <= 4; j++) {
-                obtenerToken(puntero, usoAuxiliar, delimitador, usos, hayToken);
+                obtenerToken(puntero, usoAuxiliar, delim, usos, hayToken);
                 listaGlobales[j].usoClient = listaGlobales[j].usoClient + stoi(usos);
             }
             
+            usoAuxiliar = obtenerTokenLista(1,aux);
             for (int j = 0; j <= 4; j++) {
-                obtenerToken(puntero, usoAuxiliar, delimitador, usos, hayToken);
+                obtenerToken(puntero, usoAuxiliar, delim, usos, hayToken);
                 listaGlobales[j].usoRTC = listaGlobales[j].usoRTC + stoi(usos);
             }
             
+            usoAuxiliar = obtenerTokenLista(2,aux);
             for (int j = 0; j <= 4; j++) {
-                obtenerToken(puntero, usoAuxiliar, delimitador, usos, hayToken);
+                obtenerToken(puntero, usoAuxiliar, delim, usos, hayToken);
                 listaGlobales[j].usoTweetC = listaGlobales[j].usoTweetC + stoi(usos);
             }
-
+            usoAuxiliar = obtenerTokenLista(3,aux);
             for (int j = 0; j <= 4; j++) {
-                obtenerToken(puntero, usoAuxiliar, delimitador, usos, hayToken);
+                obtenerToken(puntero, usoAuxiliar, delim, usos, hayToken);
                 listaGlobales[j].usoTTagC = listaGlobales[j].usoTTagC + stoi(usos);
             }
-
+            usoAuxiliar = obtenerTokenLista(4,aux);
             for (int j = 0; j <= 4; j++) {
-                obtenerToken(puntero, usoAuxiliar, delimitador, usos, hayToken);
+                obtenerToken(puntero, usoAuxiliar, delim, usos, hayToken);
                 listaGlobales[j].usoTMencionC = listaGlobales[j].usoTMencionC + stoi(usos);
             }
 		}
-        heTerminado.signal();
         if (finDatos) {
             fin = true;
         }
-        sigoGlobales.wait();
+        cout << "GLOBAL_TERMINA_ITERACION\n";
+        heTerminado.signal();
     }
     ordenacion(listaGlobales,4);
 }
 
 void tagsAnalyzerMain() {
+    cout << "\nEMPEZANDO THREAD TAGS_ANALYZER_MAIN\n";
     bool fin = false;
     int tagPointer,hashtagPointer,indAux;
     string tagsAux,tokenTags,hashtag,autor;
@@ -278,6 +257,8 @@ void tagsAnalyzerMain() {
     nodoRT* auxP;
     nodoRT auxNodo;
     while (!fin) {
+        cout << "ESPERANDO PERMISO PARA LEER\n";
+        sigoTags.wait();
         for (int i = 0; i < size; i++) {
             // inicializando strings con los que trabajarán los threads auxiliares del analizador de tagsAnalyzer
             tagsRT = string();
@@ -285,29 +266,44 @@ void tagsAnalyzerMain() {
             tagsM = string();
             tokenTags = obtenerTokenLista(5,buffer[i]);
             tagsAux = string();
+            cout << "TAGS_TOTALES: \n";
             obtenerToken(tagPointer,tokenTags,delimTag,tagsAux,inRange); // deja solo tags en tagsAux
             if (inRange) { // si es vacío no procesamos tags
+                cout << "RETWEETS: \n";
                 obtenerToken(tagPointer,tokenTags,delimTag,tagsRT,inRange); // deja los tags en retweets en tagsRT
+                cout << "TWEETS: \n";
                 obtenerToken(tagPointer,tokenTags,delimTag,tagsO,inRange); // deja los tags en tweets en tagsO
+                cout << "TWEETS CON MENCIONES: \n";
                 obtenerToken(tagPointer,tokenTags,delimTag,tagsM,inRange); // deja los tags en tweets con menciones en tagsO
                 // PROCESAMIENTO DE TAGS
                 hashtagPointer = 1; // ignoramos el primer "#"
                 auxP = nullptr;
+                cout << "HASHTAG: \n";
                 obtenerToken(hashtagPointer,tagsAux,delimAutor,hashtag,inRange); // obtenemos el hashtag
+                cout << "AUTOR: \n";
                 obtenerToken(hashtagPointer,tagsAux,delimHashtag,autor,inRange); // obtenemos el autor
                 while (inRange) {
                     estandarizarHashtag(hashtag);
+                    cout << "TRATAMIENTO EN LA LISTA\n";
                     if (obtenerNodo(listaTagsAux,hashtag,auxP) > 0) {
-                        actTotal(*auxP,1);
-                        actQuienTotal(*auxP,autor);
+                        cout << "NODO ENCONTRADO\n";
+                        actTotal(auxP,1);
+                        actQuienTotal(auxP,autor);
                     }
                     else { // no está en la lista
+                        cout << "NODO NO ENCONTRADO\n";
                         iniciarNodoTag(auxNodo,hashtag);
+                        cout << "AÑADIENDO A LA LISTA\n";
                         insertarNodo(listaTagsAux,auxNodo);
                     }
+                    cout << "HASHTAG: \n";
                     obtenerToken(hashtagPointer,tagsAux,delimAutor,hashtag,inRange);
+                    cout << "AUTOR: \n";
                     obtenerToken(hashtagPointer,tagsAux,delimHashtag,autor,inRange); 
                 }
+            }
+            else {
+                cout << "error: no hay tags que procesar\n";
             }
             if ((i == size-1) && ultimaIteracion) {
                 finBloques = true;
@@ -323,14 +319,14 @@ void tagsAnalyzerMain() {
         while (existeSiguiente(listaTagsAux)) {
             auxNodo = siguiente(listaTagsAux);
             if (indAux = obtenerNodo(listaTags,identificador(auxNodo),auxP) > 0) {
-                actApHashtagM(*auxP,mostrarHashtagM(auxNodo));
-                actApHashtagRT(*auxP,mostrarHashtagRT(auxNodo));
-                actApHashtagT(*auxP,mostrarHashtagT(auxNodo));
-                actTotal(*auxP,total(auxNodo));
-                actQuienHashtagM(*auxP,mostrarQuienHM(auxNodo));
-                actQuienHashtagRT(*auxP,mostrarQuienHRT(auxNodo));
-                actQuienHashtagT(*auxP,mostrarQuienHM(auxNodo));
-                actTotal(*auxP,total(auxNodo));
+                actApHashtagM(auxP,mostrarHashtagM(auxNodo));
+                actApHashtagRT(auxP,mostrarHashtagRT(auxNodo));
+                actApHashtagT(auxP,mostrarHashtagT(auxNodo));
+                actTotal(auxP,total(auxNodo));
+                actQuienHashtagM(auxP,mostrarQuienHM(auxNodo));
+                actQuienHashtagRT(auxP,mostrarQuienHRT(auxNodo));
+                actQuienHashtagT(auxP,mostrarQuienHM(auxNodo));
+                actTotal(auxP,total(auxNodo));
                 // actualizamos el nodo en listaTags
                 actualizarNodo(listaTags,indAux);
             }
@@ -340,16 +336,16 @@ void tagsAnalyzerMain() {
         }
         // borramos la lista auxiliar
         vaciarLista(listaTags);
-        
-        heTerminado.signal();
         if (finDatos) {
             fin = true;
             ultimaIteracion = true;
         }
+        heTerminado.signal();
     }
 }
 
 void tagsAnalyzerRT() {
+    cout << "\nEMPEZANDO THREAD TAGS_ANALYZER_RT\n";
     bool fin = false;
     int rtPointer;
     int hashtagPointer; 
@@ -370,22 +366,23 @@ void tagsAnalyzerRT() {
             while (inRange) {
                 estandarizarHashtag(hashtag);
                 if (obtenerNodo(listaTagsAux,hashtag,auxP)) {
-                    actApHashtagRT(*auxP,1);
-                    actQuienHashtagRT(*auxP,autor);
+                    actApHashtagRT(auxP,1);
+                    actQuienHashtagRT(auxP,autor);
                 }
                 obtenerToken(hashtagPointer,tweetAux,delimAutor,hashtag,inRange);
                 obtenerToken(hashtagPointer,tweetAux,delimHashtag,autor,inRange); 
             }
             obtenerToken(rtPointer,tagsRT,delim,tweetAux,inRange); // deja solo rt en tweetAux
         }
-        hechoBloque.signal();
         if (finBloques) {
             fin = true;
         }
+        hechoBloque.signal();
     }
 }
 
 void tagsAnalyzerO() {
+    cout << "\nEMPEZANDO THREAD TAGS_ANALYZER_O\n";
     bool fin = false;
     int tweetOPointer;
     int hashtagPointer;
@@ -406,22 +403,23 @@ void tagsAnalyzerO() {
             while (inRange) {
                 estandarizarHashtag(hashtag);
                 if (obtenerNodo(listaTagsAux,hashtag,auxP)) {
-                    actApHashtagT(*auxP,1);
-                    actQuienHashtagT(*auxP,autor);
+                    actApHashtagT(auxP,1);
+                    actQuienHashtagT(auxP,autor);
                 }
                 obtenerToken(hashtagPointer,tweetAux,delimAutor,hashtag,inRange);
                 obtenerToken(hashtagPointer,tweetAux,delimHashtag,autor,inRange); 
             }
             obtenerToken(tweetOPointer,tagsO,delim,tweetAux,inRange); // deja solo rt en tweetAux
         }
-        hechoBloque.signal();
         if (finBloques) {
             fin = true;
         }
+        hechoBloque.signal();
     }
 }
 
 void tagsAnalyzerM() {
+    cout << "\nEMPEZANDO THREAD TAGS_ANALYZER_M\n";
     bool fin = false;
     int tweetMPointer;
     int hashtagPointer;
@@ -448,17 +446,17 @@ void tagsAnalyzerM() {
             while (inRange) {
                 estandarizarHashtag(hashtag);
                 if (obtenerNodo(listaTagsAux,hashtag,auxP)) {
-                    actApHashtagM(*auxP,1);
-                    actQuienHashtagM(*auxP,autorMenciones);
+                    actApHashtagM(auxP,1);
+                    actQuienHashtagM(auxP,autorMenciones);
                 }
                 obtenerToken(hP,hashtags,delimHashtag,hashtag,inRange);
             }
             obtenerToken(tweetMPointer,tagsM,delim,tweetAux,inRange); // deja solo tweetM en tweetAux
         }
-        hechoBloque.signal();
         if (finBloques) {
             fin = true;
         }
+        hechoBloque.signal();
     }
 }
 
@@ -541,7 +539,7 @@ void userAnalyzer(const int posHashtag) {
  *      · Top 10 usuarios con más menciones en tweets con el tag
  */
 void cliente() {
-
+    mostrarResultadosHashtag();
 }
 
 int main(int argc, char* argv[]) {
@@ -572,37 +570,24 @@ int main(int argc, char* argv[]) {
 
         // Chequeamos si se ha realizado la conexión
         if(socket_fd_gestor == -1) {
-            cout << "no se ha realizado la conexión\n";
+            cerr << "error: no se ha realizado la conexión\n";
             exit(1);
         }
         cout << "CONEXION ESTABLECIDA" << endl;
 
-        // // declaración de variables para intercambio de mensajes:
+        // declaración de variables para intercambio de mensajes:
         const string MESSAGE = "READ_TAGS";
         string respuesta,aux;
         int LENGTH = 500;
         int send_bytes,len,n,read_bytes;
-        // inicializarBuffer(chanGestor,socket_fd_gestor,MESSAGE,LENGTH);
-        // /********************************** GESTIÓN HILOS ***********************************/
+        /********************************** GESTIÓN HILOS ***********************************/
         // thread th_globalAnalyzer(&globalAnalyzer);
-        // // thread th_tagsAnalyzer(&tagsAnalyzer);
         // thread th_tagsAnalyerMain(&tagsAnalyzerMain);
         // thread th_tagsAnalyzerRT(&tagsAnalyzerRT);
         // thread th_tagsAnalyzerO(&tagsAnalyzerO);
         // thread th_tagsAnalyzerM(&tagsAnalyzerM);
-        // /************************************************************************************/
+        /************************************************************************************/
         while (!finDatos) {
-
-        //     heTerminado.wait(2);
-
-
-
-
-
-
-        // /* COMUNICACIÓN ABAJO */
-
-
             len = MESSAGE.length();
             n = len/500;
             for(int k = 0; k < 25; k++) {
@@ -617,6 +602,7 @@ int main(int argc, char* argv[]) {
                 }
             }
             cout << "PETICIÓN ENVIADA" << endl;
+
             respuesta = "";
             for(int i = 0; i < 25; i++) {
                 // Recibimos la respuesta del servidor gestor
@@ -631,50 +617,31 @@ int main(int argc, char* argv[]) {
                 respuesta.append(aux);
             }
             respuesta = respuesta.substr(0,respuesta.find("$$"));
-            cout << "RESPUESTA RECIBIDA" << endl;
-        //     // "reiniciamos" el buffer
-        //     size = 0;
-        //     for (int i = 0; respuesta != MENS_FIN && i < BUFFSIZE; i++) {
-                
-        //         buffer[i] = respuesta;
-        //         size++;
-        //         len = MESSAGE.length();
-        //         n = len/500;
-        //         for(int k = 0; k < 25; k++) {
-        //             if(k <  n) send_bytes = chanGestor.Send(socket_fd_gestor, MESSAGE.substr(k*500,500));
-        //             else if(k == n) send_bytes = chanGestor.Send(socket_fd_gestor, MESSAGE.substr(k*500,500)+"$$");
-        //             else send_bytes = chanGestor.Send(socket_fd_gestor, " ");
-        //             if(send_bytes == -1) {
-        //                 cerr << "Error al enviar datos al gestor: " << strerror(errno) << endl;
-        //                 // Cerramos el socket
-        //                 chanGestor.Close(socket_fd_gestor);
-        //                 exit(1);
-        //             }
-        //         }
+            cout << "RESPUESTA RECIBIDA: " + respuesta << endl;
 
-        //         respuesta = "";
-        //         for(int i = 0; i < 25; i++) {
-        //             // Recibimos la respuesta del servidor gestor
-        //             read_bytes = chanGestor.Recv(socket_fd_gestor, aux, LENGTH);
-                        
-        //             if(read_bytes == -1) {
-        //                 cerr << "Error al recibir datos: " << strerror(errno) << endl;
-        //                 // Cerramos el socket
-        //                 chanGestor.Close(socket_fd_gestor);
-        //                 exit(1);
-        //             }
-        //             respuesta.append(aux);
-        //         }
-        //         respuesta = respuesta.substr(0,respuesta.find("$$"));
-        //     }
-            if (respuesta == MENS_FIN) {
+            if (respuesta == MENS_FIN) { // si llega mensaje de fin, paramos el bucle
+                cout << "MENSAJE DE FIN RECIBIDO\n";
                 finDatos = true;
+                // // dejamos que procesen la última iteración del buffer hasta size
+                // sigoTags.signal();
+                // sigoGlobales.signal();
+                // heTerminado.wait(2);
+                // size = 0;
             }
-
+            else { // procesamos el mensaje
+                // size++;
+                // buffer[size-1] = respuesta;
+                // if (size == BUFFSIZE - 1) { // se ha reescrito el buffer
+                //     cout << "BUFFER REESCRITO\n";
+                //     sigoTags.signal();
+                //     sigoGlobales.signal();
+                //     heTerminado.wait(2);
+                //     size = 0;
+                // }
+            }
         }
         /********************************** GESTIÓN HILOS ***********************************/
         // th_globalAnalyzer.join();
-        // // th_tagsAnalyzer.join();
         // th_tagsAnalyerMain.join();
         // th_tagsAnalyzerRT.join();
         // th_tagsAnalyzerO.join();

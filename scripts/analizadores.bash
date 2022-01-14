@@ -5,7 +5,7 @@
 # Date:   24/12/2021
 # Coms:   script para lanzar los programas analizadores
 #*****************************************************************
-GESTOR_PORT=31053
+GESTOR_PORT=32030
 IP_GESTOR=155.210.152.184
 cd ..
 if [[ $ARCH = "sunos-sun4" ]]
@@ -16,7 +16,6 @@ else
 make analizadorTags
 make analizadorRendimiento
 fi
-mv analizadorTags exec/
 cd exec/
 echo "===================="
 echo "COMPILACIÓN EXITOSA"

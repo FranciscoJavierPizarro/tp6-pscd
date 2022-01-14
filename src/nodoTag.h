@@ -63,34 +63,34 @@ string mostrarQuienHM(const nodoRT nodo);
 
 /* FUNCIONES PARA MODIFICAR PARTES DEL NODO */
 
-void actTotal(nodoRT& nodo, const int ap);
+void actTotal(nodoRT* nodo, const int ap);
 /* Actualiza el valor de apHashtag sumandolo con ap */
 
-void actQuienTotal(nodoRT& nodo,const string autor);
+void actQuienTotal(nodoRT* nodo,const string autor);
 /* Actualiza el valor de quienAH concatenandolo con con el separador '/'
  * seguido con autor.
  */
 
-void actApHashtagT(nodoRT& nodo, const int ap);
+void actApHashtagT(nodoRT* nodo, const int ap);
 /* Actualiza el valor de apHashtagT sumandolo con ap */
 
-void actQuienHashtagT(nodoRT& nodo, const string autor);
+void actQuienHashtagT(nodoRT* nodo, const string autor);
 /* Actualiza el valor de quienAHT concatenandolo con el separador '/'
  * seguido con autor.
  */
 
-void actApHashtagRT(nodoRT& nodo, const int ap);
+void actApHashtagRT(nodoRT* nodo, const int ap);
 /* Actualiza el valor de apHashtagRT sumandolo con ap */
 
-void actQuienHashtagRT(nodoRT& nodo, const string autor);
+void actQuienHashtagRT(nodoRT* nodo, const string autor);
 /* Actualiza el valor de quienAHRT concatenandolo con el separador '/'
  * seguido con el autor.
  */
 
-void actApHashtagM(nodoRT& nodo, const int ap);
+void actApHashtagM(nodoRT* nodo, const int ap);
 /* Actualiza el valor de apHashtagM sumandolo con ap */
 
-void actQuienHashtagM(nodoRT& nodo,const string buffer);
+void actQuienHashtagM(nodoRT* nodo,const string buffer);
 /* Actualiza el valor de quienAHM concatenandolo con el separador '/',
  * y el buffer que tiene la estructura:
  * autor seguido del separador '&' seguido de las menciones que empieza cada mención con '@'.
@@ -109,14 +109,14 @@ struct nodoRT {
     friend int mostrarHashtagM(const nodoRT nodo);
     friend string mostrarQuienHM(const nodoRT nodo);
     /* FUNCIONES PARA MODIFICAR PARTES DEL NODO */
-    friend void actTotal(nodoRT& nodo, const int ap);
-    friend void actQuienTotal(nodoRT& nodo,const string autor);
-    friend void actApHashtagT(nodoRT& nodo, const int ap);
-    friend void actQuienHashtagT(nodoRT& nodo, const string autor);
-    friend void actApHashtagRT(nodoRT& nodo, const int ap);
-    friend void actQuienHashtagRT(nodoRT& nodo, const string autor);
-    friend void actApHashtagM(nodoRT& nodo, const int ap);
-    friend void actQuienHashtagM(nodoRT& nodo, const string buffer);
+    friend void actTotal(nodoRT* nodo, const int ap);
+    friend void actQuienTotal(nodoRT* nodo,const string autor);
+    friend void actApHashtagT(nodoRT* nodo, const int ap);
+    friend void actQuienHashtagT(nodoRT* nodo, const string autor);
+    friend void actApHashtagRT(nodoRT* nodo, const int ap);
+    friend void actQuienHashtagRT(nodoRT* nodo, const string autor);
+    friend void actApHashtagM(nodoRT* nodo, const int ap);
+    friend void actQuienHashtagM(nodoRT* nodo, const string buffer);
     private:
         string Hashtag;
         int apHashtag;

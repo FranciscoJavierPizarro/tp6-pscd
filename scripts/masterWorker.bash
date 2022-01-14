@@ -5,9 +5,9 @@
 # Date:   19/12/2021
 # Coms:   script para lanzar el programa masterWorker
 #*****************************************************************
-STREAM_PORT=31051
+STREAM_PORT=32028
 IP_STREAM=155.210.152.183
-GESTOR_PORT=31052
+GESTOR_PORT=32029
 IP_GESTOR=155.210.152.184
 cd ..
 if [[ $ARCH = "sunos-sun4" ]]

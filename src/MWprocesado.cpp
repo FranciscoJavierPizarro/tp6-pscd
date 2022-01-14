@@ -8,7 +8,8 @@
 //         tareas del master y para el analisis de bloques de tareas de los workers
 //------------------------------------------------------------------------------
 #include "MWprocesado.hpp"
-
+#include <chrono>
+using namespace chrono;
 //Comm: Procesa el bloque de entrada y genera los bloques de tareas
 //Pre:  inTweets contiene un string formado por tantos tweets como TWEETS_FROM_STREAM
 //      cada tweet tiene a su izquierda "$i" i € [0,TWEETS_FROM_STREAM) y a su derecha
@@ -49,9 +50,10 @@ void fecha(string inDate, string& outDate) {
 }
 
 void proccessTaskBlock(string& inTaskBlock, string& performance, string& result) {
-    float total = 0;
-    float t1,t2;
-    t1 = clock()/CLOCKS_PER_SEC;
+    // tomamos tiempo al principio de la ejecución
+    steady_clock::time_point inicio = steady_clock::now();
+    // código del que se quiere medir el tiempo de ejecución
+    
     //RT: 11/10/2021 He mejorado bastante el vuelo #3D y ahora muestra la isla completa, y las 6 últimas coladas juntas días 6 al 11. Con datos del @CabLaPalma sobre un mapa del @IGNSpain. @lapalmaopendata @InnovaLaPalma #VigilanciaLaPalma #LaPalma #ErupciónLaPalma #VolcandeLaPalma https://t.co/3xLFCqIqCY
     
     //Los datos sin terminacion son todos, los que terminan por rt los rts 
@@ -174,7 +176,11 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
     result += "$4 " + to_string(webAppM) + "/" + to_string(iphoneM) + "/" + to_string(androidM) + "/" + to_string(wordpressM) + "/" + to_string(miscM);
     result += "$5 " + tags + "%" + tagsRT + "%" + tagsO + "%" + tagsM; 
 
-    t2 = clock()/CLOCKS_PER_SEC;
-    total += (t2-t1);
-    performance = to_string(total);
+    // tomamos tiempo al final de la ejecución
+    steady_clock::time_point fin = steady_clock::now();
+
+
+    float duracion = duration_cast<microseconds>(fin - inicio).count(); // duración en microsegundos
+    performance = to_string(duracion);
+    // cout << "========================\n" << tags.length() << endl;
 }

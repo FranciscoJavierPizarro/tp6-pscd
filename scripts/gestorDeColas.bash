@@ -5,8 +5,8 @@
 # Date:   19/12/2021
 # Coms:   script para lanzar el programa gestorDeColas
 #*****************************************************************
-MW_PORT=31052
-AC_PORT=31053
+MW_PORT=32029
+AC_PORT=32030
 cd ..
 if [[ $ARCH = "sunos-sun4" ]]
 then
