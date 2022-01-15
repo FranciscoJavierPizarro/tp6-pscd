@@ -52,6 +52,9 @@ void masterWorker(Socket& socTareas, int fd, ControldeCola& controlTareas, Bound
         mensaje = mensaje.substr(0,mensaje.find("$$"));
         
         //Procesar petición
+        cout << "==========" << endl;
+        cout << mensaje << endl;
+        cout << "==========" << endl;
         if(mensaje == "FIN") {
             cout << "FIN PROCESO MASTER RECIBIDO" << endl;
             out = true;

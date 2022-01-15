@@ -92,7 +92,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
     int send_bytes;  //num de bytes enviados en un mensaje
     int len;
     int n;
-    for(int j = 0; j < 200; j++) {
+    for(int j = 0; j < 100; j++) {
         mensaje = "GET_TWEETS";
         // Enviamos el mensaje de petición al servicio de streaming
         send_bytes = chanStream.Send(socket_fd_streaming, mensaje);
@@ -127,7 +127,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
             n = len/500;
             for(int k = 0; k < 25; k++) {
                 if(k <  n) send_bytes = chanGestor.Send(socket_fd_gestor, tareas[i].substr(k*500,500));
-                else if(k == n) send_bytes = chanGestor.Send(socket_fd_gestor, tareas[i].substr(k*500,500)+"$$");
+                else if(k == n) send_bytes = chanGestor.Send(socket_fd_gestor, tareas[i].substr(k*500,498)+"$$");
                 // send_bytes = chanGestor.Send(socket_fd_gestor, tareas[i].substr(k*len/26,len/26));
                 else send_bytes = chanGestor.Send(socket_fd_gestor, " ");
                 if(send_bytes == -1) {

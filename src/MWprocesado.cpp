@@ -77,14 +77,9 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
     //TAGS separados por #
     //#ErupcionLaPalma&author#volcán&author
     string tags;
-    string tagsRT;
-    string tagsO;
     //Menciones separadas por @
     //@pepe&author@juan&author
     string mencion;
-    string mencionRT;
-    string mencionO;
-
     //VARIABLES AUXILIARES
     string tweet[TWEETS_TO_TASK];
     string campos[4];
@@ -159,8 +154,6 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
                 if(aux != a && a < campos[3].length()) {
                     b = campos[3].find_first_of(" ",a); 
                     tags.append(campos[3].substr(a,b - a));
-                    if(esRT) tagsRT.append(campos[3].substr(a,b - a));
-                    else tagsO.append(campos[3].substr(a,b - a));
                 }
             }
         }
@@ -174,8 +167,6 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
                 if(aux != a && a < campos[3].length()) {
                     b = campos[3].find_first_of(" ",a);
                     mencion.append(campos[3].substr(a,b - a));
-                    if(esRT) mencionRT.append(campos[3].substr(a,b - a));
-                    else mencionO.append(campos[3].substr(a,b - a));
                 }
             }
         }
@@ -192,8 +183,8 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
     result += "$3 " + to_string(webAppH) + "/" + to_string(iphoneH) + "/" + to_string(androidH) + "/" + to_string(wordpressH) + "/" + to_string(miscH);
     result += "$4 " + to_string(webAppM) + "/" + to_string(iphoneM) + "/" + to_string(androidM) + "/" + to_string(wordpressM) + "/" + to_string(miscM);
     result += "$5 " + authors + "/" + authorsRT + "/" + authorsO + "/" + authorsH + "/" + authorsM; 
-    result += "$6 " + tags + "%" + tagsRT + "%" + tagsO; 
-    result += "$7 " + mencion + "%" + mencionRT + "%" + mencionO;
+    result += "$6 " + tags + "%"; 
+    result += "$7 " + mencion + "%";
     // tomamos tiempo al final de la ejecución
     steady_clock::time_point fin = steady_clock::now();
 
