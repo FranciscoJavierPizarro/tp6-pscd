@@ -92,7 +92,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
     int send_bytes;  //num de bytes enviados en un mensaje
     int len;
     int n;
-    for(int j = 0; j < 3; j++) {
+    for(int j = 0; j < 200; j++) {
         mensaje = "GET_TWEETS";
         // Enviamos el mensaje de petición al servicio de streaming
         send_bytes = chanStream.Send(socket_fd_streaming, mensaje);
@@ -235,7 +235,7 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id, Semaphore& sem) {
         mensaje = "READ_TAREAS," + to_string(id);
         send_bytes = chanGestor.Send(socket_fd_gestor, mensaje);
         if(send_bytes == -1) {
-            cerr << "Error al enviar datos fin al gestor: " << strerror(errno) << endl;
+            cerr << "Error al enviar petición datos al gestor: " << strerror(errno) << endl;
             // Cerramos el socket
             chanGestor.Close(socket_fd_gestor);
             exit(1);
@@ -244,7 +244,7 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id, Semaphore& sem) {
             send_bytes = chanGestor.Send(socket_fd_gestor, "$$");
                     
             if(send_bytes == -1) {
-                cerr << "Error al enviar datos fin al gestor: " << strerror(errno) << endl;
+                cerr << "Error al enviar petición fin al gestor1: " << strerror(errno) << endl;
                 // Cerramos el socket
                 chanGestor.Close(socket_fd_gestor);
                 exit(1);
@@ -286,13 +286,12 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id, Semaphore& sem) {
                 else if(k == n) send_bytes = chanGestor.Send(socket_fd_gestor, mensaje.substr(k*500,498)+"$$");
                 else send_bytes = chanGestor.Send(socket_fd_gestor, " ");
                 if(send_bytes == -1) {
-                    cerr << "Error al enviar datos al gestor: " << strerror(errno) << endl;
+                    cerr << "Error al enviar datos al gestor1: " << strerror(errno) << endl;
                     // Cerramos el socket
                     chanGestor.Close(socket_fd_gestor);
                     exit(1);
                 }
             }
-
             // Enviamos el mensaje de petición al gestor
             mensaje = "PUBLISH_TAGS,"+ tags + "," + to_string(id);
             len = mensaje.length();
@@ -302,7 +301,7 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id, Semaphore& sem) {
                 else if(k == n) send_bytes = chanGestor.Send(socket_fd_gestor, mensaje.substr(k*500,498)+"$$");
                 else send_bytes = chanGestor.Send(socket_fd_gestor, " ");
                 if(send_bytes == -1) {
-                    cerr << "Error al enviar datos al gestor: " << strerror(errno) << endl;
+                    cerr << "Error al enviar datos al gestor2: " << strerror(errno) << endl;
                     // Cerramos el socket
                     chanGestor.Close(socket_fd_gestor);
                     exit(1);

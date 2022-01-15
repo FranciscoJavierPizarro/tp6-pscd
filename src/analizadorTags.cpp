@@ -11,535 +11,196 @@
 //------------------------------------------------------------------------------
 #include "Socket/Socket.hpp"
 #include "Semaphore_V4/Semaphore_V4.hpp"
-#include "nodoTag.h"
-#include "nodoUsuario.h"
-#include "listaGenerica.h"
 #include <thread>
 #include <ctime>
 #include <string>
+#include <fstream>
+#include <iostream>
 using namespace std;
+#include "arbin/arbin.h"
+#include "arbin/pila.h"
+#include "arbin/inform.h"
+#include <iomanip>
 
-// VARIABLES GLOBALES
-const int BUFFSIZE = 20;
-string buffer[BUFFSIZE];
-int size = 0;
-// constantes para la gestión de procesamiento de los resultados del gestor de colas:
-const char delim = '/';
-const char delimAutor = '&';
-const char delimHashtag = '#';
-const char delimTag = '%';
-
-/* en el nodo, hay un cliente, número de usos totales del cliente con el que se accede a twitter,
- * con el que se escriben twteets, con el que se escriben tweets con tags, con el que se
- * escriben tweets con menciones y con el que se hace retweet.
- */
-struct nodoRG {
-    string Client = string();
-    int usoClient = 0;
-    int usoTweetC = 0;
-    int usoTTagC = 0;
-    int usoTMencionC = 0;
-    int usoRTC = 0;
-};
-/* Clasificamos los clientes como los 4 más usados según una extracción
- * de tweets previa al lanzamiento del sistema y un cliente que servirá de comodín para el resto.
- * inicialmente tendrá la siguiente disposición: 
- * (al finalizar la información a procesar se ordenará de más usado al menos)
- * listaGlobales[0] es webApp
- * listaGlobales[1] es iphone
- * listaGlobales[2] es android
- * listaGlobales[3] es wordPress
- * listaGlobales[4] es el resto
- */
-nodoRG listaGlobales[5];
-
-/* Dado un Hashtag: hay un nodoUser, especificado en nodoUsuario.h*/
-struct resultadosHashtags {
-    string Hashtag;
-    lista<nodoUser> autores;
-};
-
-resultadosHashtags top10[10];
-
-// lista utilizada para almacenar los resultados de los tags
-lista<nodoRT> listaTags;
-
-//lista utilizada para almacenar los resultados parciales de los tags del buffer en cada reescritura del buffer
-lista<nodoRT> listaTagsAux;
-
-// GESTIÓN SINCRONIZACIÓN:
-Semaphore heTerminado(0);
-Semaphore sigoTags(0);
-Semaphore sigoGlobales(0);
-bool finDatos = false;
-
-bool finBloques = false;
-bool ultimaIteracion = false;
-Semaphore hechoBloque(0);
-Semaphore sigoTRT(0);
-Semaphore sigoTO(0);
-Semaphore sigoTM(0);
-string tagsRT,tagsO,tagsM;
-
-/********************************** FUNCIONES AUXILIARES ***********************************/
-// Pre: buffer es un string con la estructura del mensaje depositado en la cola de resultados:
-//      buffer = $0 + información de resultados + $1 + info + ... + $5 + info
-//      infoDeseada > 0 AND infoDeseada <= 5
-// Post: Devuelve el string $(infoDeseada) + información
-string obtenerTokenLista(const int infoDeseada,const string buffer) {
-    int posIn,posFin;
-    string token;
-    posIn = buffer.find("$" + to_string(infoDeseada),0) + 3; // el 2 es para saltarnos el caracter "$" e infoDeseada
-    if (infoDeseada == 6) { // caso especial ya que es el final
-        token = buffer.substr(posIn,buffer.length()-posIn);
+void tagsInformation(Semaphore& imprimir, int nTotal, int nTotalTags) {
+    ifstream f;
+    f.open("./../src/tempFiles/tags.txt");
+    string texto;
+    inform p;
+    arbin<inform> c;
+    crear(c);
+    if(f.is_open()) { //leemos del fichero
+        getline(f,texto);
+        while (!f.eof()) {
+            crear(texto,1,p);
+            anyadir(p,c);
+            getline(f,texto);
+        }
     }
-    else {
-        posFin = buffer.find_first_of('$',posIn);
-        token = buffer.substr(posIn,posFin-posIn);
+    inform vecp[10];
+    iniciarIterador(c);
+    siguiente(c, p);
+    vecp[0] = p;
+    for(int i = 1; i < 9; i++) { // inicializamos vector para filtrar los 10 más usados
+        siguiente(c, p);
+        bool encontrado = false;
+        for (int j = i-1; j >= 0 && !encontrado ;j--) {
+            if (identificador(p) == identificador(vecp[j])) {
+                encontrado = true;
+            }
+        }
+        if (!encontrado) {
+            vecp[i] = p;
+        }
     }
-    cout << "TOKEN LISTA OBTENIDO: " + token + "\n"; 
-    return token;
+    iniciarIterador(c);
+    int l = 0;
+    bool repe = false;
+    while (existeSiguiente(c)) {// procesamos los datos almacenados para quedarnos con los 10 más usados
+        siguiente(c, p);
+        l = 0;
+        repe = false;
+        while(!(p > vecp[l]) && l < 10 && !repe) {
+            if (identificador(p) == identificador(vecp[l])) repe = true;
+            l++;
+        }
+        if(l < 9) {
+            for(int i = 9; i >= l && !repe; i--) {
+                if(i == l) vecp[l] = p;
+                else vecp[i] = vecp[i - 1];
+            }
+        }       
+    }
+    imprimir.wait();
+    cout << "\n+----------------------\033[1;4;5mTOP 10 HASHTAGS MÁS USADOS\033[0m----------------------+\n";
+    for(int i = 0; i <= 9; i++) {
+        cout << "\tHASHTAG Nº " + to_string(i+1) + ": " + identificador(vecp[i]) << endl;
+        cout << "\tNÚMERO DE APARICIONES: " << valor(vecp[i]) << endl;
+        cout << "\tPORCENTAJE HASHTAG/NÚMERO DE TWEETS EN EL SISTEMA: " << valor(vecp[i])/float(nTotal)*100 << "%" << endl;
+        cout << "\tPORCENTAJE HASHTAG/NÚMERO DE HASHTAGS TOTALES EN EL SISTEMA: " << valor(vecp[i])/float(nTotalTags)*100 << "%" << endl;
+    }
+    cout << "+------------------------------------------------------------------------+\n";
+    imprimir.signal();
 }
 
-// Pre: posIn > 0 AND posIn < #buffer 
-// Post: inRange = posIn < #buffer
-//       resultado = buffer[posIn] + buffer[posIn+1] + ... + buffer[i-1] siendo buffer[i] = delimitador o buffer[#buffer-1]
-//       AND posIn = i + 1
-//       AND (posIn >= #buffer -> posIn = 0)
-void obtenerToken(int& posIn,const string buffer,const char delimitador, string& resultado,bool& inRange) {
-    inRange = true;
-    if (posIn >= buffer.length()) {
-        inRange = false;
-        posIn = 0;
-    }
-    else {
-        int i = buffer.find_first_of(delimitador,posIn);
-        if (i == string::npos) { // es el final del string
-            i = buffer.length();
-        }
-        resultado = buffer.substr(posIn,i-posIn);
-        posIn = i + 1;
-    }
-    cout << "token obtenido: " + resultado + "\n";
-}
-
-// Pre: hashtag es un hashtags válido dentro de las normas de twitter.
-// Post: estandariza el hashtag según las reglas de twitter:
-//       no hay diferencias entre mayúscula y minúscula (se pondrá todo minúsculas)
-//       tampoco entre llevar tilde o no (se pondrá sin tilde)
-//       ni entre llevar ñ o n (se pondrá con n)
-void estandarizarHashtag(string& hashtag) {
-    for (int i = 0; i < hashtag.length(); i++) {
-        if (isalpha(hashtag[i])) {
-            tolower(hashtag[i]);
-        }
-        if (hashtag[i] == 'á') {
-            cout << "tilde encontrada\n";
-            hashtag[i] = 'a';
-        }
-        else if (hashtag[i] == 'é') {
-            cout << "tilde encontrada\n";
-            hashtag[i] = 'e';
-        }
-        else if (hashtag[i] == 'í') {
-            cout << "tilde encontrada\n";
-            hashtag[i] = 'i';
-        }
-        else if (hashtag[i] == 'ó') {
-            cout << "tilde encontrada\n";
-            hashtag[i] = 'o';
-        }
-        else if (hashtag[i] == 'ú') {
-            cout << "tilde encontrada\n";
-            hashtag[i] = 'u';
-        }
-        else if (hashtag[i] == 'ñ') {
-            cout << "n~ encontrada\n";
-            hashtag[i] ='n';
+void authorsInformation(Semaphore& imprimir) {
+    ifstream f;
+    f.open("./../src/tempFiles/authors.txt");
+    string texto;
+    inform p;
+    arbin<inform> c;
+    crear(c);
+    if(f.is_open()) {//leemos del fichero
+        getline(f,texto);
+        while (!f.eof()) {
+            crear(texto,1,p);
+            anyadir(p,c);
+            getline(f,texto);
         }
     }
-    cout << "HASHTAG ESTANDARIZADO: " + hashtag + "\n";
-}
-
-// Pre: Ordenar es un vector de structs de tipo nodoRG
-// Post: Ordenar contiene los structs ordenados de mayor tamaño de la
-//      componente usoClient a menor tamaño
-
-void ordenacion(nodoRG ordenar[], int limite) {
-    nodoRG aux;
-    for (int i = 0; i < limite - 1; i++) {
-        for (int j = 1; j <= limite; j++) {
-            if (ordenar[i].usoClient < ordenar[j].usoClient) {
-                aux = ordenar[i];
-                ordenar[i] = ordenar[j];
-                ordenar[j] = aux;
+    inform vecp[10];
+    iniciarIterador(c);
+    siguiente(c, p);
+    vecp[0] = p;
+    for(int i = 1; i < 9; i++) {// inicializamos vector para filtrar los 10 más usados
+        siguiente(c, p);
+        bool encontrado = false;
+        for (int j = i-1; j >= 0 && !encontrado ;j--) {
+            if (identificador(p) == identificador(vecp[j])) {
+                encontrado = true;
             }
+        }
+        if (!encontrado) {
+            vecp[i] = p;
         }
     }
-}
-
-void mostrarResultadosHashtag() {
-    nodoRT aux;
-    iniciarIterador(listaTags);
-    cout << "-----------TOP 10 HASHTAGS-----------\n";
-    int i = 1;
-    while(existeSiguiente(listaTags)) {
-        aux = siguiente(listaTags);
-        cout << "HASHTAG " + to_string(i) + ": " + identificador(aux) << endl;
-        cout << "Total de apariciones: " << total(aux) << endl;
-        cout << "Número de tweets con el hashtag: " << mostrarHashtagT(aux) << endl;
-        cout << "Número de retweets con el hashtag: " << mostrarHashtagRT(aux) << endl;
-        cout << "Número de tweets con el hashtag y contienen menciones: " << mostrarHashtagM(aux) << endl;
+    iniciarIterador(c);
+    int l = 0;
+    bool repe = false;
+    while (existeSiguiente(c)) {// procesamos los datos almacenados para quedarnos con los 10 más usados
+        siguiente(c, p);
+        l = 0;
+        repe = false;
+        while(!(p > vecp[l]) && l < 10 && !repe) {
+            if (identificador(p) == identificador(vecp[l])) repe = true;
+            l++;
+        }
+        if(l < 9) {
+            for(int i = 9; i >= l && !repe; i--) {
+                if(i == l) vecp[l] = p;
+                else vecp[i] = vecp[i - 1];
+            }
+        }       
     }
-}
-
-/********************************** HILOS (Procesos) del analizadorTags: ***********************************/
-
-// Pre: ---
-// Post: mientras no hay más datos que leer,lee del buffer, procesa cada elemento hasta size, y el resultado 
-//       (descrito en la declaración de su lista) lo almacena en listaGlobales. 
-void globalAnalyzer() {
-    cout << "\nEMPEZANDO THREAD GLOBAL_ANALYZER\n";
-    // variables
-    bool fin = false;
-    while(!fin) {
-        cout << "ESPERANDO PERMISO PARA LEER\n";
-        sigoGlobales.wait();
-        for (int i = 0; i < size; i++) {
-            string aux = buffer[i];
-            string usoAuxiliar = obtenerTokenLista(0,aux);
-            int puntero = 0;
-            string usos;
-            bool hayToken;
-
-            for (int j = 0; j <= 4; j++) {
-                obtenerToken(puntero, usoAuxiliar, delim, usos, hayToken);
-                listaGlobales[j].usoClient = listaGlobales[j].usoClient + stoi(usos);
-            }
-            
-            usoAuxiliar = obtenerTokenLista(1,aux);
-            for (int j = 0; j <= 4; j++) {
-                obtenerToken(puntero, usoAuxiliar, delim, usos, hayToken);
-                listaGlobales[j].usoRTC = listaGlobales[j].usoRTC + stoi(usos);
-            }
-            
-            usoAuxiliar = obtenerTokenLista(2,aux);
-            for (int j = 0; j <= 4; j++) {
-                obtenerToken(puntero, usoAuxiliar, delim, usos, hayToken);
-                listaGlobales[j].usoTweetC = listaGlobales[j].usoTweetC + stoi(usos);
-            }
-            usoAuxiliar = obtenerTokenLista(3,aux);
-            for (int j = 0; j <= 4; j++) {
-                obtenerToken(puntero, usoAuxiliar, delim, usos, hayToken);
-                listaGlobales[j].usoTTagC = listaGlobales[j].usoTTagC + stoi(usos);
-            }
-            usoAuxiliar = obtenerTokenLista(4,aux);
-            for (int j = 0; j <= 4; j++) {
-                obtenerToken(puntero, usoAuxiliar, delim, usos, hayToken);
-                listaGlobales[j].usoTMencionC = listaGlobales[j].usoTMencionC + stoi(usos);
-            }
-		}
-        if (finDatos) {
-            fin = true;
-        }
-        cout << "GLOBAL_TERMINA_ITERACION\n";
-        heTerminado.signal();
+    imprimir.wait();
+    cout << "\n+-----------------------------\033[1;4;5mTOP 10 AUTORES MÁS ACTIVOS\033[0m-----------------------------+\n";
+    for(int i = 0; i <= 9; i++) {
+        cout << "\tAUTOR Nº " + to_string(i+1) + ": " + identificador(vecp[i]) + "\n";
+        cout << "\tACTIVIDAD POR LA RED (tweets,retweets...): " << valor(vecp[i]) << endl;
     }
-    ordenacion(listaGlobales,4);
+    cout << "+--------------------------------------------------------------------------------------+\n";
+    imprimir.signal();
 }
 
-void tagsAnalyzerMain() {
-    cout << "\nEMPEZANDO THREAD TAGS_ANALYZER_MAIN\n";
-    bool fin = false;
-    int tagPointer,hashtagPointer,indAux;
-    string tagsAux,tokenTags,hashtag,autor;
-    bool inRange; 
-    nodoRT* auxP;
-    nodoRT auxNodo;
-    while (!fin) {
-        cout << "ESPERANDO PERMISO PARA LEER\n";
-        sigoTags.wait();
-        for (int i = 0; i < size; i++) {
-            // inicializando strings con los que trabajarán los threads auxiliares del analizador de tagsAnalyzer
-            tagsRT = string();
-            tagsO = string();
-            tagsM = string();
-            tokenTags = obtenerTokenLista(5,buffer[i]);
-            tagsAux = string();
-            cout << "TAGS_TOTALES: \n";
-            obtenerToken(tagPointer,tokenTags,delimTag,tagsAux,inRange); // deja solo tags en tagsAux
-            if (inRange) { // si es vacío no procesamos tags
-                cout << "RETWEETS: \n";
-                obtenerToken(tagPointer,tokenTags,delimTag,tagsRT,inRange); // deja los tags en retweets en tagsRT
-                cout << "TWEETS: \n";
-                obtenerToken(tagPointer,tokenTags,delimTag,tagsO,inRange); // deja los tags en tweets en tagsO
-                cout << "TWEETS CON MENCIONES: \n";
-                obtenerToken(tagPointer,tokenTags,delimTag,tagsM,inRange); // deja los tags en tweets con menciones en tagsO
-                // PROCESAMIENTO DE TAGS
-                hashtagPointer = 1; // ignoramos el primer "#"
-                auxP = nullptr;
-                cout << "HASHTAG: \n";
-                obtenerToken(hashtagPointer,tagsAux,delimAutor,hashtag,inRange); // obtenemos el hashtag
-                cout << "AUTOR: \n";
-                obtenerToken(hashtagPointer,tagsAux,delimHashtag,autor,inRange); // obtenemos el autor
-                while (inRange) {
-                    estandarizarHashtag(hashtag);
-                    cout << "TRATAMIENTO EN LA LISTA\n";
-                    if (obtenerNodo(listaTagsAux,hashtag,auxP) > 0) {
-                        cout << "NODO ENCONTRADO\n";
-                        actTotal(auxP,1);
-                        actQuienTotal(auxP,autor);
-                    }
-                    else { // no está en la lista
-                        cout << "NODO NO ENCONTRADO\n";
-                        iniciarNodoTag(auxNodo,hashtag);
-                        cout << "AÑADIENDO A LA LISTA\n";
-                        insertarNodo(listaTagsAux,auxNodo);
-                    }
-                    cout << "HASHTAG: \n";
-                    obtenerToken(hashtagPointer,tagsAux,delimAutor,hashtag,inRange);
-                    cout << "AUTOR: \n";
-                    obtenerToken(hashtagPointer,tagsAux,delimHashtag,autor,inRange); 
-                }
-            }
-            else {
-                cout << "error: no hay tags que procesar\n";
-            }
-            if ((i == size-1) && ultimaIteracion) {
-                finBloques = true;
-            }
-            sigoTRT.signal();
-            sigoTO.signal();
-            sigoTM.signal();
-            hechoBloque.wait(3);
+void mencionInformation(Semaphore& imprimir, int nTotal, int nMenciones) {
+    ifstream f;
+    f.open("./../src/tempFiles/mencion.txt");
+    string texto;
+    inform p;
+    arbin<inform> c;
+    crear(c);
+    if(f.is_open()) {//leemos del fichero
+        getline(f,texto);
+        while (!f.eof()) {
+            crear(texto,1,p);
+            anyadir(p,c);
+            getline(f,texto);
         }
-        // inserción en listaTags
-        auxP = nullptr;
-        iniciarIterador(listaTagsAux);
-        while (existeSiguiente(listaTagsAux)) {
-            auxNodo = siguiente(listaTagsAux);
-            if (indAux = obtenerNodo(listaTags,identificador(auxNodo),auxP) > 0) {
-                actApHashtagM(auxP,mostrarHashtagM(auxNodo));
-                actApHashtagRT(auxP,mostrarHashtagRT(auxNodo));
-                actApHashtagT(auxP,mostrarHashtagT(auxNodo));
-                actTotal(auxP,total(auxNodo));
-                actQuienHashtagM(auxP,mostrarQuienHM(auxNodo));
-                actQuienHashtagRT(auxP,mostrarQuienHRT(auxNodo));
-                actQuienHashtagT(auxP,mostrarQuienHM(auxNodo));
-                actTotal(auxP,total(auxNodo));
-                // actualizamos el nodo en listaTags
-                actualizarNodo(listaTags,indAux);
-            }
-            else {
-                insertarNodo(listaTags,auxNodo);
-            }
-        }
-        // borramos la lista auxiliar
-        vaciarLista(listaTags);
-        if (finDatos) {
-            fin = true;
-            ultimaIteracion = true;
-        }
-        heTerminado.signal();
     }
-}
-
-void tagsAnalyzerRT() {
-    cout << "\nEMPEZANDO THREAD TAGS_ANALYZER_RT\n";
-    bool fin = false;
-    int rtPointer;
-    int hashtagPointer; 
-    bool inRange;
-    nodoRT* auxP;
-    string tweetAux,hashtag,autor;
-    while (!fin) {
-        sigoTRT.wait();
-        rtPointer = 0;
-        hashtagPointer = 1; // ignoramos el primer "#"
-        auxP = nullptr;
-        tweetAux = string();
-        // PROCESAMIENTO DE TAGS_RT
-        obtenerToken(rtPointer,tagsRT,delim,tweetAux,inRange); // deja solo rt en tweetAux
-        while (inRange) {
-            obtenerToken(hashtagPointer,tweetAux,delimAutor,hashtag,inRange); // obtenemos el hashtag
-            obtenerToken(hashtagPointer,tweetAux,delimHashtag,autor,inRange); // obtenemos el autor
-            while (inRange) {
-                estandarizarHashtag(hashtag);
-                if (obtenerNodo(listaTagsAux,hashtag,auxP)) {
-                    actApHashtagRT(auxP,1);
-                    actQuienHashtagRT(auxP,autor);
-                }
-                obtenerToken(hashtagPointer,tweetAux,delimAutor,hashtag,inRange);
-                obtenerToken(hashtagPointer,tweetAux,delimHashtag,autor,inRange); 
+    inform vecp[10];
+    iniciarIterador(c);
+    siguiente(c, p);
+    vecp[0] = p;
+    for(int i = 1; i < 9; i++) {// inicializamos vector para filtrar los 10 más usados
+        siguiente(c, p);
+        bool encontrado = false;
+        for (int j = i-1; j >= 0 && !encontrado ;j--) {
+            if (identificador(p) == identificador(vecp[j])) {
+                encontrado = true;
             }
-            obtenerToken(rtPointer,tagsRT,delim,tweetAux,inRange); // deja solo rt en tweetAux
         }
-        if (finBloques) {
-            fin = true;
+        if (!encontrado) {
+            vecp[i] = p;
         }
-        hechoBloque.signal();
     }
-}
-
-void tagsAnalyzerO() {
-    cout << "\nEMPEZANDO THREAD TAGS_ANALYZER_O\n";
-    bool fin = false;
-    int tweetOPointer;
-    int hashtagPointer;
-    bool inRange;
-    nodoRT* auxP;
-    string tweetAux,hashtag,autor;
-    while (!fin) {
-        sigoTO.wait();
-        tweetOPointer = 0;
-        hashtagPointer = 1; // ignoramos el primer "#"
-        auxP = nullptr;
-        tweetAux = string();
-        // PROCESAMIENTO DE TAGS_O
-        obtenerToken(tweetOPointer,tagsO,delim,tweetAux,inRange); // deja solo rt en tweetAux
-        while (inRange) {
-            obtenerToken(hashtagPointer,tweetAux,delimAutor,hashtag,inRange); // obtenemos el hashtag
-            obtenerToken(hashtagPointer,tweetAux,delimHashtag,autor,inRange); // obtenemos el autor
-            while (inRange) {
-                estandarizarHashtag(hashtag);
-                if (obtenerNodo(listaTagsAux,hashtag,auxP)) {
-                    actApHashtagT(auxP,1);
-                    actQuienHashtagT(auxP,autor);
-                }
-                obtenerToken(hashtagPointer,tweetAux,delimAutor,hashtag,inRange);
-                obtenerToken(hashtagPointer,tweetAux,delimHashtag,autor,inRange); 
+    iniciarIterador(c);
+    int l = 0;
+    bool repe = false;
+    while (existeSiguiente(c)) {// procesamos los datos almacenados para quedarnos con los 10 más usados
+        siguiente(c, p);
+        l = 0;
+        repe = false;
+        while(!(p > vecp[l]) && l < 10 && !repe) {
+            if (identificador(p) == identificador(vecp[l])) repe = true;
+            l++;
+        }
+        if(l < 9) {
+            for(int i = 9; i >= l && !repe; i--) {
+                if(i == l) vecp[l] = p;
+                else vecp[i] = vecp[i - 1];
             }
-            obtenerToken(tweetOPointer,tagsO,delim,tweetAux,inRange); // deja solo rt en tweetAux
-        }
-        if (finBloques) {
-            fin = true;
-        }
-        hechoBloque.signal();
+        }       
     }
-}
-
-void tagsAnalyzerM() {
-    cout << "\nEMPEZANDO THREAD TAGS_ANALYZER_M\n";
-    bool fin = false;
-    int tweetMPointer;
-    int hashtagPointer;
-    int hP;
-    nodoRT* auxP;
-    string tweetAux,hashtags,hashtag,autor,menciones,autorMenciones;
-    bool inRange;
-    while (!fin) {
-        sigoTM.wait();
-        tweetMPointer = 0;
-        hashtagPointer = 1; // ignoramos el primer "#"
-        hP = 0;
-        auxP = nullptr;
-        tweetAux = string();
-        // PROCESAMIENTO DE TAGS_M
-        obtenerToken(tweetMPointer,tagsM,delim,tweetAux,inRange); // deja solo tweetM en tweetAux
-        while (inRange) {
-            obtenerToken(hashtagPointer,tweetAux,delimHashtag,menciones,inRange); // obtenemos las menciones
-            obtenerToken(hashtagPointer,tweetAux,delimAutor,hashtags,inRange); // obtenemos los hashtags
-            obtenerToken(hashtagPointer,tweetAux,delimHashtag,autor,inRange); // obtenemos el autor (delimHashtag se pone por defecto)
-            // PROCESAMIENTO DE HASHTAG DE HASHTAGS
-            autorMenciones = autor + "&" + menciones;
-            obtenerToken(hP,hashtags,delimHashtag,hashtag,inRange); // obtenemos el hashtag de los hashtags
-            while (inRange) {
-                estandarizarHashtag(hashtag);
-                if (obtenerNodo(listaTagsAux,hashtag,auxP)) {
-                    actApHashtagM(auxP,1);
-                    actQuienHashtagM(auxP,autorMenciones);
-                }
-                obtenerToken(hP,hashtags,delimHashtag,hashtag,inRange);
-            }
-            obtenerToken(tweetMPointer,tagsM,delim,tweetAux,inRange); // deja solo tweetM en tweetAux
-        }
-        if (finBloques) {
-            fin = true;
-        }
-        hechoBloque.signal();
+    imprimir.wait();
+    cout << "\n+----------------------\033[1;4;5mTOP 10 AUTORES MAS INFLUYENTES\033[0m----------------------+\n";
+    for(int i = 0; i <= 9; i++) {
+        cout << "\tAUTOR Nº " + to_string(i+1) + ": " + identificador(vecp[i]) + "\n";
+        cout << "\tNÚMERO DE MENCIONES: " << valor(vecp[i]) << endl;
+        cout << "\tPORCENTAJE MENCIONES/NÚMERO DE TWEETS EN EL SISTEMA (influencia): " << valor(vecp[i])/float(nTotal)*100 << "%" << endl;
+        cout << "\tPORCENTAJE MENCIONES/NÚMERO DE MENCIONES TOTALES EN EL SISTEMA: " << valor(vecp[i])/float(nMenciones)*100 << "%" << endl;
     }
-}
-
-// Pre: ---
-// Post: busca el nodo posHashtag de la lista listaTags y 
-//       procesa cada elemento hasta size, y el resultado (descrito en la declaración de su lista)
-//       lo la almacena en su lista resultadosUser[posHashtag]
-void userAnalyzer(const int posHashtag) {
-    /*  algoritmo crearListaPorTag():
-        buscar resultadosUser[posHashtag]
-        si posHashtag + 1 <= listaTags.totalHashtags 
-            buscar nodoRT[posHashtag] 
-            Dado listaTags[posHashtag]:
-                crear lista auxiliar de usuarios
-                mientras no se acabe quienAH
-                    buscarAutorEnLista(autorDeLista,suMomento) (consume los autores del string)
-                    si está 
-                        nodoAuxiliarDelUsuario.actividad++
-                    sino
-                        crearNuevoNodo() 
-                        inicializarNodoVacío()
-                        autor = autorDeLista 
-                        actividad = 1
-                    fsi
-                fmientras
-                mientras no se acabe quienAHT
-                    buscarAutorEnLista(autorDeLista,suMomento) (consume los autores y su momento del string)
-                    nodoAuxiliarDelUsuario.usoTweet++
-                fmientras
-                mientras no se acabe quienAHRT
-                    buscarAutorEnLista(autorDeLista,suMomento) (consume los autores y su momento del string)
-                    nodoAuxiliarDelUsuario.usoRT++
-                fmientras
-                mientras no se acabe quienAHM
-                    buscarAutorEnLista(autorDeLista,suMomento) (consume los autores del string)
-                    nodoAuxiliarDelUsuario.usoTMencion++
-                fmientras
-                // INSERCIÓN EN LA LISTA
-                para cada nodo de la lista auxiliar
-                    buscarAutor()
-                    si está
-                        actualizar esteNodoUser(nodoAuxiliar)
-                        si esteNodoUser.actividad > nodoUser[9]
-                            ordenarLista()
-                        sino
-                            no modificamos la lista
-                        fsi
-                    sino 
-                        si nodoAuxiliar.actividad > nodoUser[9]
-                            ordenarLista(nodoAuxiliar)
-                        sino
-                            inserciónAlFinal()
-                        fsi
-                    fsi
-                fpara
-            fdado
-        sino 
-            no hacemos nada
-        fsi
-    */
-}
-
-// Pre: ---
-/* Post: Lee las diferentes listas para mostrar por pantalla las siguientes conclusiones:
- *  - Visión global:
- *      · Top 5 Clientes más utilizados para acceder a twitter
- *      · Top 5 Clientes más utilizados para escribir tweets
- *      · Top 5 Clientes más utilizados al escribir tweets con tags
- *      · Top 5 Clientes más utilizados al escribir tweets con menciones
- *      · Top 5 Clientes más utilizados para hacer retweet
- *  - Visión desde los tags:
- *      · Top 10 Hashtags más utilizados durante la vida del sistema
- *      · Top 10 Hashtags más utilizados en tweets originales
- *      · Top 10 Hashtags más utilizados en retweets
- *      · Top 10 Hashtags más utilizados en tweets con menciones
- *  - Visión desde los usuarios (por cada tag del top 10):
- *      · Top 10 usuarios con más actividad con el tag
- *      · Top 10 usuarios con más tweets escritos con el tag
- *      · Top 10 usuarios con más retweets con el tag
- *      · Top 10 usuarios con más menciones en tweets con el tag
- */
-void cliente() {
-    mostrarResultadosHashtag();
+    cout << "+----------------------------------------------------------------------------+\n";
+    imprimir.signal();
 }
 
 int main(int argc, char* argv[]) {
@@ -573,94 +234,219 @@ int main(int argc, char* argv[]) {
             cerr << "error: no se ha realizado la conexión\n";
             exit(1);
         }
-        cout << "CONEXION ESTABLECIDA" << endl;
+        cout << "\033[32;1;4;5mCONEXION ESTABLECIDA\033[0m" << endl;
 
         // declaración de variables para intercambio de mensajes:
         const string MESSAGE = "READ_TAGS";
         string respuesta,aux;
         int LENGTH = 500;
         int send_bytes,len,n,read_bytes;
-        /********************************** GESTIÓN HILOS ***********************************/
-        // thread th_globalAnalyzer(&globalAnalyzer);
-        // thread th_tagsAnalyerMain(&tagsAnalyzerMain);
-        // thread th_tagsAnalyzerRT(&tagsAnalyzerRT);
-        // thread th_tagsAnalyzerO(&tagsAnalyzerO);
-        // thread th_tagsAnalyzerM(&tagsAnalyzerM);
-        /************************************************************************************/
-        while (!finDatos) {
-            len = MESSAGE.length();
-            n = len/500;
-            for(int k = 0; k < 25; k++) {
-                if(k <  n) send_bytes = chanGestor.Send(socket_fd_gestor, MESSAGE.substr(k*500,500));
-                else if(k == n) send_bytes = chanGestor.Send(socket_fd_gestor, MESSAGE.substr(k*500,500)+"$$");
-                else send_bytes = chanGestor.Send(socket_fd_gestor, " ");
-                if(send_bytes == -1) {
-                    cerr << "Error al enviar datos al gestor: " << strerror(errno) << endl;
-                    // Cerramos el socket
-                    chanGestor.Close(socket_fd_gestor);
-                    exit(1);
+        bool finDatos = false;
+        int a,b;
+        //VARIABLES PARA PROCESADO
+        int webApp = 0,iphone = 0,android = 0,wordpress = 0, misc = 0;
+        int webAppRT = 0,iphoneRT = 0,androidRT = 0,wordpressRT = 0, miscRT = 0;
+        int webAppO = 0,iphoneO = 0,androidO = 0,wordpressO = 0, miscO = 0;
+        int webAppH = 0,iphoneH = 0,androidH = 0,wordpressH = 0, miscH = 0;
+        int webAppM = 0,iphoneM = 0,androidM = 0,wordpressM = 0, miscM = 0;
+        ofstream tags("./../src/tempFiles/tags.txt");
+        ofstream authors("./../src/tempFiles/authors.txt");
+        ofstream mencion("./../src/tempFiles/mencion.txt");
+        string auxProcesado;
+        if(tags.is_open() && authors.is_open() && mencion.is_open()) {
+            while (!finDatos) {
+                len = MESSAGE.length();
+                n = len/500;
+                for(int k = 0; k < 25; k++) {
+                    if(k <  n) send_bytes = chanGestor.Send(socket_fd_gestor, MESSAGE.substr(k*500,500));
+                    else if(k == n) send_bytes = chanGestor.Send(socket_fd_gestor, MESSAGE.substr(k*500,500)+"$$");
+                    else send_bytes = chanGestor.Send(socket_fd_gestor, " ");
+                    if(send_bytes == -1) {
+                        cerr << "Error al enviar datos al gestor: " << strerror(errno) << endl;
+                        // Cerramos el socket
+                        chanGestor.Close(socket_fd_gestor);
+                        exit(1);
+                    }
                 }
-            }
-            cout << "PETICIÓN ENVIADA" << endl;
+                cout << "PETICIÓN ENVIADA" << endl;
 
-            respuesta = "";
-            for(int i = 0; i < 25; i++) {
-                // Recibimos la respuesta del servidor gestor
-                read_bytes = chanGestor.Recv(socket_fd_gestor, aux, LENGTH);
+                respuesta = "";
+                for(int i = 0; i < 25; i++) {
+                    // Recibimos la respuesta del servidor gestor
+                    read_bytes = chanGestor.Recv(socket_fd_gestor, aux, LENGTH);
+                        
+                    if(read_bytes == -1) {
+                        cerr << "Error al recibir datos: " << strerror(errno) << endl;
+                        // Cerramos el socket
+                        chanGestor.Close(socket_fd_gestor);
+                        exit(1);
+                    }
+                    respuesta.append(aux);
+                }
+                respuesta = respuesta.substr(0,respuesta.find("$$"));
+
+                if (respuesta == MENS_FIN) { // si llega mensaje de fin, paramos el bucle
+                    cout << "MENSAJE DE FIN RECIBIDO\n";
+                    finDatos = true;
+                    // Cerramos el socket
+                    int error_code = chanGestor.Close(socket_fd_gestor);
+                    if(error_code == -1) {
+                        cerr << "Error cerrando el socket: " << strerror(errno) << endl;
+                    }
+                    cout << "\033[32;1;4;5mCONEXION FINALIZADA\033[0m" << endl;
+                }
+                else { 
+                    //PROCESAR MENSAJE
+                    a = respuesta.find("$0 ") + 3;
+                    b = respuesta.find_first_of("/",a);
+                    webApp += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    iphone += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    android += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    wordpress += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    misc += stoi(respuesta.substr(a,b - a));
+
+                    a = respuesta.find("$1 ") + 3;
+                    b = respuesta.find_first_of("/",a)- a;
+                    webAppRT += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    iphoneRT += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    androidRT += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    wordpressRT += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    miscRT += stoi(respuesta.substr(a,b - a));
+
+                    a = respuesta.find("$2 ") + 3;
+                    b = respuesta.find_first_of("/",a);
+                    webAppO += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    iphoneO += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    androidO += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    wordpressO += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    miscO += stoi(respuesta.substr(a,b - a));
+
+                    a = respuesta.find("$3 ") + 3;
+                    b = respuesta.find_first_of("/",a);
+                    webAppH += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    iphoneH += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    androidH += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    wordpressH += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    miscH += stoi(respuesta.substr(a,b - a));
+
+                    a = respuesta.find("$4 ") + 3;
+                    b = respuesta.find_first_of("/",a);
+                    webAppM += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    iphoneM += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    androidM += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    wordpressM += stoi(respuesta.substr(a,b - a));
+                    a = respuesta.find_first_of("/",b) + 1;
+                    b = respuesta.find_first_of("/",a);
+                    miscM += stoi(respuesta.substr(a,b - a));
                     
-                if(read_bytes == -1) {
-                    cerr << "Error al recibir datos: " << strerror(errno) << endl;
-                    // Cerramos el socket
-                    chanGestor.Close(socket_fd_gestor);
-                    exit(1);
+                    a = respuesta.find("$5 ") + 3;
+                    b = respuesta.find_first_of("/", a);
+                    auxProcesado = respuesta.substr(a, b - a);
+
+                    a = 0;
+                    b = auxProcesado.find_first_of(";", a);
+                    while(b != a) {
+                        authors << auxProcesado.substr(a,b - a) + "\n";
+                        a = b;
+                        b = auxProcesado.find_first_of(";", a);
+                    }
+                    
+                
+                    a = respuesta.find("$6 ") + 3;
+                    b = respuesta.find_first_of("%", a);
+                    auxProcesado = respuesta.substr(a, b - a);
+                    // cout << auxProcesado << endl;
+                    a = 0;
+                    b = auxProcesado.find_first_of("#", a + 1);
+                    while(b != a) {
+                        tags << auxProcesado.substr(a,b - a) + "\n";
+                        a = b;
+                        b = auxProcesado.find_first_of("#", a);
+                    }
+                    
+                    a = respuesta.find("$7 ") + 3;
+                    b = respuesta.find_first_of("%", a);
+                    auxProcesado = respuesta.substr(a, b - a);
+                    // cout << auxProcesado << endl;
+
+                    a = 0;
+                    b = auxProcesado.find_first_of("@", a + 1);
+                    while(b != a) {
+                        mencion << auxProcesado.substr(a,b - a) + "\n";
+                        a = b;
+                        b = auxProcesado.find_first_of("@", a);
+                    }
+                    
                 }
-                respuesta.append(aux);
-            }
-            respuesta = respuesta.substr(0,respuesta.find("$$"));
-            cout << "RESPUESTA RECIBIDA: " + respuesta << endl;
-
-            if (respuesta == MENS_FIN) { // si llega mensaje de fin, paramos el bucle
-                cout << "MENSAJE DE FIN RECIBIDO\n";
-                finDatos = true;
-                // // dejamos que procesen la última iteración del buffer hasta size
-                // sigoTags.signal();
-                // sigoGlobales.signal();
-                // heTerminado.wait(2);
-                // size = 0;
-            }
-            else { // procesamos el mensaje
-                // size++;
-                // buffer[size-1] = respuesta;
-                // if (size == BUFFSIZE - 1) { // se ha reescrito el buffer
-                //     cout << "BUFFER REESCRITO\n";
-                //     sigoTags.signal();
-                //     sigoGlobales.signal();
-                //     heTerminado.wait(2);
-                //     size = 0;
-                // }
             }
         }
-        /********************************** GESTIÓN HILOS ***********************************/
-        // th_globalAnalyzer.join();
-        // th_tagsAnalyerMain.join();
-        // th_tagsAnalyzerRT.join();
-        // th_tagsAnalyzerO.join();
-        // th_tagsAnalyzerM.join();
-        /* despues de pruebas descomentar
-        thread th_userAnalyzer[10];
-
-        for (int i = 0; i < tamanyo(listaTags) && i < 10; i++) {
-            th_userAnalyzer[i] = thread(&userAnalyzer,i);
-        }
-
-        for (int i = 0; i < tamanyo(listaTags); i++) {
-            th_userAnalyzer[i].join();
-        }
+        tags.close();
+        authors.close();
+        mencion.close();
         
-        thread th_cliente(&cliente);
-        th_cliente.join();
-        */
-        /************************************************************************************/
+        int nTotal, nTotalTags, nMenciones;
+        nTotal = webApp + iphone + android + wordpress + misc;
+        nTotalTags = webAppH + iphoneH + androidH + wordpressH + miscH;
+        nMenciones = webAppM + iphoneM + androidM + wordpressM + miscM;
+        Semaphore imprimir(1);
+        thread Ttags, Tauthors, Tmencion;
+        Ttags = thread(&tagsInformation, ref(imprimir), nTotal, nTotalTags);
+        Tauthors = thread(&authorsInformation, ref(imprimir));
+        Tmencion = thread(&mencionInformation, ref(imprimir), nTotal, nMenciones);
+
+        cout << "\n+------------------------\033[1;4;5mESTADISTICAS NUMÉRICAS\033[0m------------------------+\n";
+        cout << "CLIENTE             TOTAL       RT         ORIGINAL  TAGS  MENCIONES  PORCENTAJE\n";
+        cout << "WebApp:        " << setw(8) << webApp << " " << setw(8) << webAppRT << " " << setw(8) << webAppO << " " << setw(8) << webAppH << " " << setw(8) << webAppM << " " << setw(14) << webApp/float(nTotal) << "\n"; 
+        cout << "Iphone:        " << setw(8) << iphone << " " << setw(8) << iphoneRT << " " << setw(8) << iphoneO << " " << setw(8) << iphoneH << " " << setw(8) << iphoneM << " " << setw(14) << iphone/float(nTotal) << "\n";
+        cout << "Android:       " << setw(8) << android << " " << setw(8) << androidRT << " " << setw(8) << androidO << " " << setw(8) << androidH << " " << setw(8) << androidM << " " << setw(14) << android/float(nTotal) << "\n";
+        cout << "Wordpress:     " << setw(8) << wordpress << " " << setw(8) << wordpressRT << " " << setw(8) << wordpressO << " " << setw(8) << wordpressH << " " << setw(8) << wordpressM << " " << setw(14) << wordpress/float(nTotal) << "\n";
+        cout << "Otros:         " << setw(8) << misc << " " << setw(8) << miscRT << " " << setw(8) << miscO << " " << setw(8) << miscH << " " << setw(8) << miscM << " " << setw(14) << misc/float(nTotal) << "\n";
+        cout << "+----------------------------------------------------------------------+\n";
+
+        imprimir.wait();
+        cout << endl;
+        imprimir.signal();
+        Ttags.join();
+        Tauthors.join();
+        Tmencion.join();
         cout << "BYE BYE" << endl;
     }
     else {

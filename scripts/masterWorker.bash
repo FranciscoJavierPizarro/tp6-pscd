@@ -12,7 +12,7 @@ IP_GESTOR=155.210.152.184
 cd ..
 if [[ $ARCH = "sunos-sun4" ]]
 then
-gmake -f Makefile_hendrix masterWorker
+gmake masterWorker
 else
 make masterWorker
 fi

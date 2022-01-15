@@ -67,11 +67,24 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
     int webAppO = 0,iphoneO = 0,androidO = 0,wordpressO = 0, miscO = 0;
     int webAppH = 0,iphoneH = 0,androidH = 0,wordpressH = 0, miscH = 0;
     int webAppM = 0,iphoneM = 0,androidM = 0,wordpressM = 0, miscM = 0;
-    //TAGS separados
+    //Autores separados por ;
+    //x_y_es;IGNSpain;
+    string authors = "";
+    string authorsRT = "";
+    string authorsO = "";
+    string authorsH = "";
+    string authorsM = "";
+    //TAGS separados por #
+    //#ErupcionLaPalma&author#volcán&author
     string tags;
     string tagsRT;
     string tagsO;
-    string tagsM;
+    //Menciones separadas por @
+    //@pepe&author@juan&author
+    string mencion;
+    string mencionRT;
+    string mencionO;
+
     //VARIABLES AUXILIARES
     string tweet[TWEETS_TO_TASK];
     string campos[4];
@@ -132,18 +145,12 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
             if(contieneTag) miscH++;
             if(contieneMencion) miscM++;
         }
-        
+        authors.append(campos[2] + ";");
+        if(esRT) authorsRT.append(campos[2] + ";");
+        else authorsO.append(campos[2] + ";");
+        if(contieneTag) authorsH.append(campos[2] + ";");
+        if(contieneMencion) authorsM.append(campos[2] + ";");
         if(contieneTag){
-            a = 0;
-            aux = 1;
-            while(a != aux){
-                aux = a;
-                a = (campos[3].find_first_of("@",a));
-                if(aux != a && a < campos[3].length()) {
-                    b = campos[3].find_first_of(" ",a);
-                    tagsM.append(campos[3].substr(a,b - a));
-                }
-            }
             a = 0;
             aux = 1;
             while(a != aux){
@@ -151,19 +158,32 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
                 a = (campos[3].find_first_of("#",a));
                 if(aux != a && a < campos[3].length()) {
                     b = campos[3].find_first_of(" ",a); 
-                    tags.append(campos[3].substr(a,b - a) + "&" + campos[2]);
-                    if(!lista.esta(campos[3].substr(a,b - a))) {
-                        if(esRT) tagsRT.append(campos[3].substr(a,b - a) + "&" + campos[2]);
-                        else tagsO.append(campos[3].substr(a,b - a) + "&" + campos[2]);
-                        if(contieneMencion) tagsM.append(campos[3].substr(a,b - a));
-                        lista.add(campos[3].substr(a,b - a));
-                    }
+                    tags.append(campos[3].substr(a,b - a));
+                    if(esRT) tagsRT.append(campos[3].substr(a,b - a));
+                    else tagsO.append(campos[3].substr(a,b - a));
                 }
             }
-            tagsM.append("&"+ campos[2]);
-            lista.empty();
         }
+        if(contieneMencion && contieneTag){
+            a = 0;
+            aux = 1;
+            while(a != aux){
+                aux = a;
+                a = (campos[3].find_first_of("@",a));
+                //APAÑO MUY CUTRE POR BUG CUIDADO
+                if(aux != a && a < campos[3].length()) {
+                    b = campos[3].find_first_of(" ",a);
+                    mencion.append(campos[3].substr(a,b - a));
+                    if(esRT) mencionRT.append(campos[3].substr(a,b - a));
+                    else mencionO.append(campos[3].substr(a,b - a));
+                }
+            }
+        }
+
     }
+
+
+
 
     result = "";
     result += "$0 " + to_string(webApp) + "/" + to_string(iphone) + "/" + to_string(android) + "/" + to_string(wordpress) + "/" + to_string(misc);
@@ -171,8 +191,9 @@ void proccessTaskBlock(string& inTaskBlock, string& performance, string& result)
     result += "$2 " + to_string(webAppO) + "/" + to_string(iphoneO) + "/" + to_string(androidO) + "/" + to_string(wordpressO) + "/" + to_string(miscO);
     result += "$3 " + to_string(webAppH) + "/" + to_string(iphoneH) + "/" + to_string(androidH) + "/" + to_string(wordpressH) + "/" + to_string(miscH);
     result += "$4 " + to_string(webAppM) + "/" + to_string(iphoneM) + "/" + to_string(androidM) + "/" + to_string(wordpressM) + "/" + to_string(miscM);
-    result += "$5 " + tags + "%" + tagsRT + "%" + tagsO + "%" + tagsM; 
-
+    result += "$5 " + authors + "/" + authorsRT + "/" + authorsO + "/" + authorsH + "/" + authorsM; 
+    result += "$6 " + tags + "%" + tagsRT + "%" + tagsO; 
+    result += "$7 " + mencion + "%" + mencionRT + "%" + mencionO;
     // tomamos tiempo al final de la ejecución
     steady_clock::time_point fin = steady_clock::now();
 

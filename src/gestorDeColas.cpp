@@ -71,7 +71,7 @@ void masterWorker(Socket& socTareas, int fd, ControldeCola& controlTareas, Bound
                     n_len = len/500;
                     for(int k = 0; k < 25; k++) {
                         if(k <  n_len) send_bytes = socTareas.Send(fd, datos.substr(k*500,500));
-                        else if(k == n_len) send_bytes = socTareas.Send(fd, datos.substr(k*500,500)+"$$");
+                        else if(k == n_len) send_bytes = socTareas.Send(fd, datos.substr(k*500,498)+"$$");
                         else send_bytes = socTareas.Send(fd, " ");
                         if(send_bytes == -1) {
                             cerr << "Error al enviar datos al gestor: " << strerror(errno) << endl;
@@ -166,7 +166,7 @@ void analizadores(Socket& socAnalizadores, int fd, ControldeCola& controlQoS, Bo
                 n_len = len/500;
                 for(int k = 0; k < 25; k++) {
                     if(k <  n_len) send_bytes = socAnalizadores.Send(fd, datos.substr(k*500,500));
-                    else if(k == n_len) send_bytes = socAnalizadores.Send(fd, datos.substr(k*500,500)+"$$");
+                    else if(k == n_len) send_bytes = socAnalizadores.Send(fd, datos.substr(k*500,498)+"$$");
                     else send_bytes = socAnalizadores.Send(fd, " ");
                     if(send_bytes == -1) {
                         cerr << "Error al enviar datos al gestor: " << strerror(errno) << endl;
@@ -210,7 +210,7 @@ void analizadores(Socket& socAnalizadores, int fd, ControldeCola& controlQoS, Bo
                 n_len = len/500;
                 for(int k = 0; k < 25; k++) {
                     if(k <  n_len) send_bytes = socAnalizadores.Send(fd, datos.substr(k*500,500));
-                    else if(k == n_len) send_bytes = socAnalizadores.Send(fd, datos.substr(k*500,500)+"$$");
+                    else if(k == n_len) send_bytes = socAnalizadores.Send(fd, datos.substr(k*500,498)+"$$");
                     else send_bytes = socAnalizadores.Send(fd, " ");
                     if(send_bytes == -1) {
                         cerr << "Error al enviar datos al gestor: " << strerror(errno) << endl;
