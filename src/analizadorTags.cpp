@@ -72,14 +72,14 @@ void tagsInformation(Semaphore& imprimir, int nTotal, int nTotalTags) {
         }       
     }
     imprimir.wait();
-    cout << "\n+----------------------\033[1;4;5mTOP 10 HASHTAGS MÁS USADOS\033[0m----------------------+\n";
+    cout << "\n+----------------------\033[1;4mTOP 10 HASHTAGS MÁS USADOS\033[0m----------------------+\n";
     for(int i = 0; i <= 9; i++) {
         cout << "\tHASHTAG Nº " + to_string(i+1) + ": " + identificador(vecp[i]) << endl;
         cout << "\tNÚMERO DE APARICIONES: " << valor(vecp[i]) << endl;
         cout << "\tPORCENTAJE HASHTAG/NÚMERO DE TWEETS EN EL SISTEMA: " << valor(vecp[i])/float(nTotal)*100 << "%" << endl;
         cout << "\tPORCENTAJE HASHTAG/NÚMERO DE HASHTAGS TOTALES EN EL SISTEMA: " << valor(vecp[i])/float(nTotalTags)*100 << "%" << endl;
     }
-    cout << "+------------------------------------------------------------------------+\n";
+    cout << "+--------------------------------------------------------------------------------------+\n";
     imprimir.signal();
 }
 
@@ -133,12 +133,12 @@ void authorsInformation(Semaphore& imprimir) {
         }       
     }
     imprimir.wait();
-    cout << "\n+-----------------------------\033[1;4;5mTOP 10 AUTORES MÁS ACTIVOS\033[0m-----------------------------+\n";
+    cout << "\n+-----------------------------\033[1;4mTOP 10 AUTORES MÁS ACTIVOS\033[0m-----------------------------+\n";
     for(int i = 0; i <= 9; i++) {
-        cout << "\tAUTOR Nº " + to_string(i+1) + ": " + identificador(vecp[i]) + "\n";
+        cout << "\tAUTOR Nº " + to_string(i+1) + ": " + identificador(vecp[i]) << endl;
         cout << "\tACTIVIDAD POR LA RED (tweets,retweets...): " << valor(vecp[i]) << endl;
     }
-    cout << "+--------------------------------------------------------------------------------------+\n";
+    cout << "+----------------------------------------------------------------------------------------------------+\n";
     imprimir.signal();
 }
 
@@ -192,14 +192,14 @@ void mencionInformation(Semaphore& imprimir, int nTotal, int nMenciones) {
         }       
     }
     imprimir.wait();
-    cout << "\n+----------------------\033[1;4;5mTOP 10 AUTORES MAS INFLUYENTES\033[0m----------------------+\n";
+    cout << "\n+----------------------\033[1;4mTOP 10 AUTORES MAS INFLUYENTES\033[0m----------------------+\n";
     for(int i = 0; i <= 9; i++) {
-        cout << "\tAUTOR Nº " + to_string(i+1) + ": " + identificador(vecp[i]) + "\n";
+        cout << "\tAUTOR Nº " + to_string(i+1) + ": " + identificador(vecp[i]) << endl;
         cout << "\tNÚMERO DE MENCIONES: " << valor(vecp[i]) << endl;
         cout << "\tPORCENTAJE MENCIONES/NÚMERO DE TWEETS EN EL SISTEMA (influencia): " << valor(vecp[i])/float(nTotal)*100 << "%" << endl;
         cout << "\tPORCENTAJE MENCIONES/NÚMERO DE MENCIONES TOTALES EN EL SISTEMA: " << valor(vecp[i])/float(nMenciones)*100 << "%" << endl;
     }
-    cout << "+----------------------------------------------------------------------------+\n";
+    cout << "+------------------------------------------------------------------------------------------+\n";
     imprimir.signal();
 }
 
@@ -234,7 +234,7 @@ int main(int argc, char* argv[]) {
             cerr << "error: no se ha realizado la conexión\n";
             exit(1);
         }
-        cout << "\033[32;1;4;5mCONEXION ESTABLECIDA\033[0m" << endl;
+        cout << "\033[32;1;4mCONEXION ESTABLECIDA\033[0m" << endl;
 
         // declaración de variables para intercambio de mensajes:
         const string MESSAGE = "READ_TAGS";
@@ -293,9 +293,10 @@ int main(int argc, char* argv[]) {
                     if(error_code == -1) {
                         cerr << "Error cerrando el socket: " << strerror(errno) << endl;
                     }
-                    cout << "\033[32;1;4;5mCONEXION FINALIZADA\033[0m" << endl;
+                    cout << "\033[32;1;4mCONEXION FINALIZADA\033[0m" << endl;
                 }
                 else { 
+                    cout << "DATOS RECIBIDOS" << endl;
                     //PROCESAR MENSAJE
                     a = respuesta.find("$0 ") + 3;
                     b = respuesta.find_first_of("/",a);
@@ -393,7 +394,6 @@ int main(int argc, char* argv[]) {
                     a = respuesta.find("$6 ") + 3;
                     b = respuesta.find_first_of("%", a);
                     auxProcesado = respuesta.substr(a, b - a);
-                    // cout << auxProcesado << endl;
                     a = 0;
                     b = auxProcesado.find_first_of("#", a + 1);
                     while(b != a) {
@@ -405,14 +405,15 @@ int main(int argc, char* argv[]) {
                     a = respuesta.find("$7 ") + 3;
                     b = respuesta.find_first_of("%", a);
                     auxProcesado = respuesta.substr(a, b - a);
-                    // cout << auxProcesado << endl;
 
-                    a = 0;
-                    b = auxProcesado.find_first_of("@", a + 1);
-                    while(b != a) {
-                        mencion << auxProcesado.substr(a,b - a) + "\n";
-                        a = b;
-                        b = auxProcesado.find_first_of("@", a);
+                    if(auxProcesado != "") { // si no hay menciones no procesamos
+                        a = 0;
+                        b = auxProcesado.find_first_of("@", a + 1);
+                        while(b != a) {
+                            mencion << auxProcesado.substr(a,b - a) + "\n";
+                            a = b;
+                            b = auxProcesado.find_first_of("@", a);
+                        }
                     }
                     
                 }
@@ -432,14 +433,14 @@ int main(int argc, char* argv[]) {
         Tauthors = thread(&authorsInformation, ref(imprimir));
         Tmencion = thread(&mencionInformation, ref(imprimir), nTotal, nMenciones);
 
-        cout << "\n+------------------------\033[1;4;5mESTADISTICAS NUMÉRICAS\033[0m------------------------+\n";
-        cout << "CLIENTE             TOTAL       RT         ORIGINAL  TAGS  MENCIONES  PORCENTAJE\n";
+        cout << "\n+--------------------------\033[1;4mESTADISTICAS NUMÉRICAS\033[0m----------------------------+\n";
+        cout << "CLIENTE             TOTAL     RT     ORIGINAL  TAGS   MENCIONES  PORCENTAJE\n";
         cout << "WebApp:        " << setw(8) << webApp << " " << setw(8) << webAppRT << " " << setw(8) << webAppO << " " << setw(8) << webAppH << " " << setw(8) << webAppM << " " << setw(14) << webApp/float(nTotal) << "\n"; 
         cout << "Iphone:        " << setw(8) << iphone << " " << setw(8) << iphoneRT << " " << setw(8) << iphoneO << " " << setw(8) << iphoneH << " " << setw(8) << iphoneM << " " << setw(14) << iphone/float(nTotal) << "\n";
         cout << "Android:       " << setw(8) << android << " " << setw(8) << androidRT << " " << setw(8) << androidO << " " << setw(8) << androidH << " " << setw(8) << androidM << " " << setw(14) << android/float(nTotal) << "\n";
         cout << "Wordpress:     " << setw(8) << wordpress << " " << setw(8) << wordpressRT << " " << setw(8) << wordpressO << " " << setw(8) << wordpressH << " " << setw(8) << wordpressM << " " << setw(14) << wordpress/float(nTotal) << "\n";
         cout << "Otros:         " << setw(8) << misc << " " << setw(8) << miscRT << " " << setw(8) << miscO << " " << setw(8) << miscH << " " << setw(8) << miscM << " " << setw(14) << misc/float(nTotal) << "\n";
-        cout << "+----------------------------------------------------------------------+\n";
+        cout << "+--------------------------------------------------------------------------+\n";
 
         imprimir.wait();
         cout << endl;

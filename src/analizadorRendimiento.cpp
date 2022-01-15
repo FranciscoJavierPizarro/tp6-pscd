@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
         if(socket_fd_gestor == -1) {
             
         }
-        cout << "\033[32;1;4;5mCONEXION ESTABLECIDA\033[0m" << endl;
+        cout << "\033[32;1;4mCONEXION ESTABLECIDA\033[0m" << endl;
 
         // declaración de variables para intercambio de mensajes:
         const string MESSAGE =  "READ_QoS";
@@ -155,12 +155,12 @@ int main(int argc, char* argv[]) {
         if(error_code == -1) {
             cerr << "Error cerrando el socket: " << strerror(errno) << endl;
         }
-        cout << "\033[32;1;4;5mCONEXION FINALIZADA\033[0m" << endl;
+        cout << "\033[32;1;4mCONEXION FINALIZADA\033[0m" << endl;
 
 
         Media = Media / nDatos;
         for(int i = 0; i < N_WORKERS; i++) MediaV[i] = MediaV[i] / procesados[i];
-        cout << "\033[1;4;5mRESULTADOS GENERALES\033[0m" << "\n";
+        cout << "\033[1;4mRESULTADOS GENERALES\033[0m" << "\n";
         cout << "============================================" << "\n";
         cout << "Tiempo de procesado medio general: " << Media << "\n";
         cout << "Tiempo máximo de procesado general: " << Max << "\n";
@@ -170,7 +170,7 @@ int main(int argc, char* argv[]) {
         cout << "RESULTADOS INDIVIDUALES" << "\n";
         for(int i = 0; i < N_WORKERS; i++) {
             cout << "============================================" << "\n";
-            cout << "\033[1;4;5mWORKER " << i << "\n\033[0m";
+            cout << "\033[1;4mWORKER " << i << "\n\033[0m";
             cout << "Número de paquetes procesados: " << procesados[i] << "\n";
             cout << "Tiempo medio de procesado: " << MediaV[i] << "\n";
             cout << "Tiempo minimo de procesado: " << MinV[i] << "\n";

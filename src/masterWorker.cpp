@@ -54,7 +54,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
         chanStream.Close(socket_fd_streaming);
         exit(1);   
     }
-    cout << "\033[32;1;4;5mCONEXION STREAMING ESTABLECIDA\033[0m" << endl;
+    cout << "\033[32;1;4mCONEXION STREAMING ESTABLECIDA\033[0m" << endl;
     // Conectamos con el servidor. Probamos varias conexiones
     count = 0;
     cout << "CONECTANDO CON GESTOR" << endl;
@@ -81,7 +81,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
         exit(1);   
     }
     sem.signal();
-    cout << "\033[32;1;4;5mCONEXION GESTOR ESTABLECIDA\033[0m" << endl;
+    cout << "\033[32;1;4mCONEXION GESTOR ESTABLECIDA\033[0m" << endl;
 
     //VARIABLES PARA RECIBIR/PROCESAR/ENVIAR MENSAJES
     int LENGTH = 500;
@@ -178,7 +178,7 @@ void master(int PORT_STREAMING, string IP_STREAMING, int PORT_GESTOR, string IP_
     if(error_code == -1) {
         cerr << "Error cerrando el socket: " << strerror(errno) << endl;
     }
-    cout << "\033[32;1;4;5mCONEXIONES FINALIZADAS\033[0m" << endl;
+    cout << "\033[32;1;4mCONEXIONES FINALIZADAS\033[0m" << endl;
 }
 
 //FUNCIÓN WORKER
@@ -217,7 +217,7 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id, Semaphore& sem) {
         exit(1);   
     }
     sem.signal();
-    cout << "\033[32;1;4;5mCONEXION ESTABLECIDA\033[0m" << endl;
+    cout << "\033[32;1;4mCONEXION ESTABLECIDA\033[0m" << endl;
 
     //VARIABLES PARA RECIBIR/PROCESAR/ENVIAR MENSAJES
     int LENGTH = 500;
@@ -316,7 +316,7 @@ void worker(int PORT_GESTOR, string IP_GESTOR, int id, Semaphore& sem) {
     if(error_code == -1) {
         cerr << "Error cerrando el socket: " << strerror(errno) << endl;
     }
-    cout << "\033[32;1;4;5mCONEXION FINALIZADA\033[0m" << endl;
+    cout << "\033[32;1;4mCONEXION FINALIZADA\033[0m" << endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -330,18 +330,18 @@ int main(int argc, char* argv[]) {
         thread mast;
         thread workers[N_WORKERS];
         Semaphore sem(1);//Se usa para evitar un bug al crear la comunicación
-        cout << "\033[1;4;5mTHREADS INICIANDOSE\033[0m" << endl;
+        cout << "\033[1;4mTHREADS INICIANDOSE\033[0m" << endl;
         mast = thread(&master, PORT_STREAMING, IP_STREAMING, PORT_GESTOR, IP_GESTOR, ref(sem));
         for(int i = 0; i < N_WORKERS; i++) {
             workers[i] = thread(&worker,PORT_GESTOR, IP_GESTOR, i, ref(sem));
         }
-        cout << "\033[1;4;5mTHREADS INICIADOS\033[0m" << endl;
+        cout << "\033[1;4mTHREADS INICIADOS\033[0m" << endl;
         //ESPERA FINALIZACIÓN
         mast.join();
         for(int i = 0; i < N_WORKERS; i++) {
             workers[i].join();
         }
-        cout << "\033[1;4;5mTHREADS FINALIZADOS\033[0m" << endl;
+        cout << "\033[1;4mTHREADS FINALIZADOS\033[0m" << endl;
         cout << "BYE BYE" << endl;
     }
     else {

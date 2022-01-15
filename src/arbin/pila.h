@@ -65,6 +65,7 @@ template<typename T> bool desapilar(pila<T>& p){
     bool ok = !esVacia(p);
     if(ok){
         typename pila<T>::nodo *aux;
+        aux = p.cima;
         p.cima = p.cima->sig;
         delete(aux);
         p.total--;

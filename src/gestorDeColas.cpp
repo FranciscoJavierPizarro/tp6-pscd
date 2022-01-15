@@ -52,9 +52,6 @@ void masterWorker(Socket& socTareas, int fd, ControldeCola& controlTareas, Bound
         mensaje = mensaje.substr(0,mensaje.find("$$"));
         
         //Procesar petición
-        cout << "==========" << endl;
-        cout << mensaje << endl;
-        cout << "==========" << endl;
         if(mensaje == "FIN") {
             cout << "FIN PROCESO MASTER RECIBIDO" << endl;
             out = true;
@@ -131,7 +128,7 @@ void masterWorker(Socket& socTareas, int fd, ControldeCola& controlTareas, Bound
         controlTags.finalizar();
     }
     socTareas.Close(fd); //cerrar el socket
-    cout << "\033[32;1;4;5mCONEXION FINALIZADA\033[0m" << endl;
+    cout << "\033[32;1;4mCONEXION FINALIZADA\033[0m" << endl;
     }
 
 //Comms:Se encarga de gestionar todo el funcionamiento/comunicación de los analizadores
@@ -252,7 +249,7 @@ void analizadores(Socket& socAnalizadores, int fd, ControldeCola& controlQoS, Bo
         } 
     }
     socAnalizadores.Close(fd); //cerrar el socket
-    cout << "\033[32;1;4;5mCONEXION FINALIZADA\033[0m" << endl;
+    cout << "\033[32;1;4mCONEXION FINALIZADA\033[0m" << endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -301,7 +298,7 @@ int main(int argc, char* argv[]) {
             chanMasterWorker.Close(socket_fd_masterWorker);
             exit(1);
         }
-        cout << "\033[1;4;5mESCUCHANDO SOCKET MASTER-WORKERS\033[0m" << endl;
+        cout << "\033[1;4mESCUCHANDO SOCKET MASTER-WORKERS\033[0m" << endl;
         for (int i=0; i<N + 1; i++) {
             // Accept
             MW_fd[i] = chanMasterWorker.Accept();
@@ -311,7 +308,7 @@ int main(int argc, char* argv[]) {
                 chanMasterWorker.Close(socket_fd_masterWorker);
                 exit(1);
             }
-            cout << "\033[32;1;4;5mCONEXION ESTABLECIDA\033[0m" << endl;
+            cout << "\033[32;1;4mCONEXION ESTABLECIDA\033[0m" << endl;
             MW[i] = thread(&masterWorker, ref(chanMasterWorker), MW_fd[i], ref(monitorTareas), ref(colaTareas), 
                            ref(monitorQoS), ref(colaQoS), ref(monitorTags), ref(colaTags), ref(finalizado), i);
         }
@@ -345,7 +342,7 @@ int main(int argc, char* argv[]) {
             chanAnalizadores.Close(socket_fd_Analizadores);
             exit(1);
         }
-        cout << "\033[1;4;5mESCUCHANDO SOCKET ANALIZADORES\033[0m" << endl;
+        cout << "\033[1;4mESCUCHANDO SOCKET ANALIZADORES\033[0m" << endl;
 
         for(int i = 0; i < 2; i++) {
             // Accept
@@ -357,7 +354,7 @@ int main(int argc, char* argv[]) {
                 chanAnalizadores.Close(socket_fd_Analizadores);
                 exit(1);
             }
-            cout << "\033[32;1;4;5mCONEXION ESTABLECIDA\033[0m" << endl;
+            cout << "\033[32;1;4mCONEXION ESTABLECIDA\033[0m" << endl;
             Tanalizadores[i] = thread(&analizadores, ref(chanMasterWorker), fd_analizadores[i], ref(monitorQoS), ref(colaQoS),
                                     ref(monitorTags), ref(colaTags));
         }
